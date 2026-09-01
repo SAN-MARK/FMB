@@ -1,0 +1,12 @@
+{
+  "name": "FindBack",
+  "description": "Lost & Found Network web app connecting finders and owners with verified local hub drop-offs.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
+
