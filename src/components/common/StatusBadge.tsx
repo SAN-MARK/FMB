@@ -2,7 +2,7 @@ import React from 'react';
 import { ItemStatus } from '../../types';
 
 interface StatusBadgeProps {
-  status: ItemStatus;
+  status: ItemStatus | 'rejected' | 'rewarded';
   size?: 'sm' | 'md';
   className?: string;
 }
@@ -12,60 +12,72 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   size = 'md',
   className = ''
 }) => {
-  const configMap: Record<ItemStatus, { label: string; bg: string; text: string; dot: string }> = {
+  const configMap: Record<string, { label: string; bg: string; text: string; dot: string }> = {
     reported: {
-      label: 'Reported / Pending Drop-off',
-      bg: 'bg-surface-container-high',
-      text: 'text-on-surface-variant',
-      dot: 'bg-outline'
+      label: 'நிலுவையில் | Pending',
+      bg: 'bg-[#FEF9C3] border border-[#F5C842]/50',
+      text: 'text-[#2B1810]',
+      dot: 'bg-[#C8541A]'
     },
     dropped_at_hub: {
-      label: 'At Verified Hub',
-      bg: 'bg-secondary-container/15 border border-secondary-container/40',
-      text: 'text-secondary font-bold',
-      dot: 'bg-secondary-container'
+      label: 'Hub-ல் உள்ளது | At Hub',
+      bg: 'bg-[#E8D5B7]/60 border border-[#C8541A]/30',
+      text: 'text-[#7B2D00]',
+      dot: 'bg-[#7B2D00]'
     },
     listed: {
-      label: 'Listed in Network',
-      bg: 'bg-primary-container/15 border border-primary-container/40',
-      text: 'text-primary font-bold',
-      dot: 'bg-primary'
+      label: 'தேடலில் | Listed',
+      bg: 'bg-[#DBEAFE] border border-[#1A3A5C]/20',
+      text: 'text-[#1A3A5C]',
+      dot: 'bg-[#1A3A5C]'
     },
     claimed: {
-      label: 'Claim in Verification',
-      bg: 'bg-secondary-fixed text-on-secondary-fixed-variant',
-      text: 'text-secondary font-bold',
-      dot: 'bg-secondary'
+      label: 'சரிபார்ப்பில் | In Review',
+      bg: 'bg-[#FEF9C3] border border-[#F5C842]/60',
+      text: 'text-[#2B1810]',
+      dot: 'bg-[#C8541A]'
     },
     verified: {
-      label: 'Owner Verified',
-      bg: 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
-      text: 'text-tertiary-container font-bold',
-      dot: 'bg-tertiary-container'
+      label: 'சரிபார்க்கப்பட்டது | Verified',
+      bg: 'bg-[#DCFCE7] border border-[#2E7D6B]/30',
+      text: 'text-[#14532D]',
+      dot: 'bg-[#2E7D6B]'
     },
     returned: {
-      label: 'Returned to Owner',
-      bg: 'bg-tertiary-fixed text-on-tertiary-fixed',
-      text: 'text-tertiary-container font-bold',
-      dot: 'bg-tertiary-container'
+      label: 'திருப்பி கொடுக்கப்பட்டது | Returned',
+      bg: 'bg-[#DBEAFE] border border-[#1A3A5C]/30',
+      text: 'text-[#1A3A5C]',
+      dot: 'bg-[#1A3A5C]'
+    },
+    rejected: {
+      label: 'நிராகரிக்கப்பட்டது | Rejected',
+      bg: 'bg-[#FEE2E2] border border-[#B91C1C]/30',
+      text: 'text-[#7F1D1D]',
+      dot: 'bg-[#B91C1C]'
+    },
+    rewarded: {
+      label: 'பரிசு கிடைத்தது ₹60 | Rewarded',
+      bg: 'bg-[#2B1810] border border-[#F5C842]/40',
+      text: 'text-[#F5C842]',
+      dot: 'bg-[#F5C842]'
     }
   };
 
   const current = configMap[status] || configMap.reported;
-  const sizeClasses = size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-1.5 text-xs md:text-sm';
+  const sizeClasses = size === 'sm' ? 'px-2.5 py-0.5 text-[11px]' : 'px-3 py-1 text-xs';
 
   return (
     <span
       className={`
-        inline-flex items-center gap-1.5 rounded-full font-label-bold tracking-wide
+        inline-flex items-center gap-1.5 rounded-full font-jakarta font-semibold tracking-tight select-none
         ${current.bg}
         ${current.text}
         ${sizeClasses}
         ${className}
       `}
     >
-      <span className={`w-2 h-2 rounded-full ${current.dot} shrink-0`} />
-      <span>{current.label}</span>
+      <span className={`w-1.5 h-1.5 rounded-full ${current.dot} shrink-0`} />
+      <span className="truncate">{current.label}</span>
     </span>
   );
 };

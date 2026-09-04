@@ -5,167 +5,207 @@ import { useApp } from '../context/AppContext';
 import { TopAppBar } from '../components/common/TopAppBar';
 import { BottomNavBar } from '../components/common/BottomNavBar';
 import { Button } from '../components/common/Button';
+import { INITIAL_HUBS, ChennaiHub } from '../data/mockData';
+import { 
+  IconCheck, 
+  IconDownload, 
+  IconBrandWhatsapp, 
+  IconArrowLeft,
+  IconCopy,
+  IconShieldCheck
+} from '@tabler/icons-react';
 
 export const TagGeneratedScreen: React.FC = () => {
-  const { activeItem, hubs, navigateTo } = useApp();
+  const { activeItem, navigateTo } = useApp();
   const qrRef = useRef<HTMLDivElement>(null);
 
-  const itemCode = activeItem?.item_code || 'FB-9921-X';
+  const itemCode = activeItem?.item_code || 'FB-2024-0041';
+  const hubs = INITIAL_HUBS as ChennaiHub[];
   const assignedHub = hubs.find(h => h.id === activeItem?.hub_id) || hubs[0];
+  const dateStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  // Trigger celebration confetti on mount
   useEffect(() => {
     try {
       confetti({
-        particleCount: 60,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#022448', '#fdb244', '#a4f3ca', '#adc8f5']
+        particleCount: 70,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ['#7B2D00', '#C8541A', '#2E7D6B', '#F5C842']
       });
     } catch (e) {
       // Confetti fallback
     }
   }, []);
 
-  const handleDownloadTag = () => {
+  const handleSaveQR = () => {
     const canvas = qrRef.current?.querySelector('canvas');
     if (!canvas) return;
 
     const link = document.createElement('a');
-    link.download = `FindBack-Tag-${itemCode}.png`;
+    link.download = `FindBack-Slip-${itemCode}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
 
-  const handleShare = async () => {
-    const shareData = {
-      title: `FindBack Tag: ${itemCode}`,
-      text: `Item registered on FindBack network with Tag ${itemCode}. Drop-off at ${assignedHub.name}.`,
-      url: window.location.href
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        // user cancelled or share failed
-      }
-    } else {
-      navigator.clipboard.writeText(`FindBack Item Tag: ${itemCode} - Hub: ${assignedHub.name}`);
-      alert(`Tag ${itemCode} copied to clipboard!`);
-    }
-  };
-
-  const handleViewStatus = () => {
-    navigateTo('item-received');
+  const handleWhatsAppShare = () => {
+    const text = encodeURIComponent(
+      `*FindBack Chennai Lost & Found Network*\n` +
+      `Collection Slip: ${itemCode}\n` +
+      `Item: ${activeItem?.category || 'Found Item'}\n` +
+      `Drop-off Hub: ${assignedHub.tamil_name || assignedHub.name} (${assignedHub.address})\n` +
+      `Status: Drop-off Ready (₹60 reward on owner return)`
+    );
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
   return (
-    <div className="bg-background text-on-background font-body-md min-h-screen flex flex-col pt-16 pb-24 md:pb-12">
-      <TopAppBar showBack onBack={() => navigateTo('drop-off')} />
+    <div className="min-h-screen bg-[#F7F0E6] bg-kolam-grid text-[#2B1810] flex flex-col selection:bg-[#C8541A] selection:text-white pb-24 md:pb-12">
+      <TopAppBar showBack onBack={() => navigateTo('role-selection')} title="சேகரிப்பு Slip" />
 
-      <main className="flex-grow flex flex-col items-center justify-center px-container-margin-mobile md:px-container-margin-desktop w-full max-w-lg mx-auto py-6 md:py-10">
-        <div className="w-full relative">
+      <main className="w-full max-w-[440px] mx-auto px-4 pt-20 flex flex-col items-center gap-5 text-center">
+
+        {/* TOP: Large animated checkmark in Neem Green circle (80px), outward ripple */}
+        <div className="relative mt-2 flex items-center justify-center">
+          {/* Outward ripple circles */}
+          <div className="absolute w-24 h-24 rounded-full bg-[#2E7D6B]/20 animate-ping" />
+          <div className="absolute w-28 h-28 rounded-full bg-[#2E7D6B]/10" />
+
+          {/* 80px Neem Green Circle */}
+          <div className="relative z-10 w-20 h-20 rounded-full bg-[#2E7D6B] text-white flex items-center justify-center shadow-[0_6px_20px_rgba(46,125,107,0.35)] ring-4 ring-[#FFFFFF]">
+            <IconCheck size={44} stroke={3} className="animate-fade-in" />
+          </div>
+        </div>
+
+        {/* Heading in Tiro Tamil 28px Night Marina */}
+        <div>
+          <h1 className="font-tiro text-[28px] font-bold text-[#2B1810] leading-tight">
+            சமர்ப்பிக்கப்பட்டது!
+          </h1>
+          <p className="font-inter text-xs sm:text-sm text-[#614436] mt-1 max-w-xs mx-auto">
+            Show this QR at {assignedHub.tamil_name || assignedHub.name} to complete drop-off
+          </p>
+        </div>
+
+        {/* QR SLIP CARD: White card, 16px radius, warm shadow */}
+        <div className="w-full bg-[#FFFFFF] rounded-2xl border border-[#E8D5B7] overflow-hidden ambient-shadow-modal flex flex-col relative text-left">
           
-          {/* Celebratory Card (Matching Stitch Image 10) */}
-          <div className="bg-surface-container-lowest rounded-2xl p-6 md:p-8 relative overflow-hidden ambient-shadow-modal border border-outline-variant/30 text-center flex flex-col items-center">
-            {/* Confetti Background Pattern */}
-            <div className="absolute inset-0 confetti-pattern pointer-events-none" />
-
-            {/* Emblem / Badge */}
-            <div className="w-16 h-16 bg-secondary-fixed rounded-full flex items-center justify-center mb-5 relative z-10 shadow-[0_4px_12px_rgba(253,178,68,0.25)] ring-4 ring-secondary-container/10">
-              <span className="material-symbols-outlined text-on-secondary-fixed text-3xl filled">
-                verified
-              </span>
+          {/* Top Strip in Marina Rust: "COLLECTION SLIP / சேகரிப்பு slip" */}
+          <div className="bg-[#7B2D00] text-white px-4 py-2.5 flex items-center justify-between">
+            <span className="font-jakarta font-bold text-xs tracking-wider uppercase">
+              COLLECTION SLIP / சேகரிப்பு slip
+            </span>
+            <div className="flex items-center gap-1 text-[10px] text-[#F5C842] font-semibold">
+              <IconShieldCheck size={14} />
+              <span>VERIFIED</span>
             </div>
+          </div>
 
-            {/* Headline & ID */}
-            <h1 className="text-2xl md:text-3xl font-serif font-bold text-primary mb-1 relative z-10">
-              Tag Generated
-            </h1>
-            <p className="text-sm font-body-md text-on-surface-variant mb-6 relative z-10">
-              ID: <span className="font-bold text-on-surface text-base tracking-wider">{itemCode}</span>
-            </p>
-
+          {/* Slip Body with QR Code */}
+          <div className="p-5 flex flex-col items-center gap-4 text-center">
+            
             {/* Scannable QR Code Canvas */}
-            <div
+            <div 
               ref={qrRef}
-              className="bg-surface p-4 rounded-xl border border-outline-variant/50 mb-6 relative z-10 shadow-[0_4px_12px_rgba(2,36,72,0.06)] flex flex-col items-center"
+              className="p-3 bg-white rounded-xl border border-[#E8D5B7] shadow-xs relative flex items-center justify-center"
             >
               <QRCodeCanvas
-                value={`https://findback.network/tag/${itemCode}?hub=${encodeURIComponent(assignedHub.name)}&cat=${activeItem?.category || 'Item'}`}
-                size={180}
+                value={`https://findback.network/tag/${itemCode}?hub=${encodeURIComponent(assignedHub.name)}`}
+                size={168}
                 level="H"
                 includeMargin
                 bgColor="#ffffff"
-                fgColor="#022448"
+                fgColor="#2B1810"
               />
-              <span className="text-[11px] font-label-bold text-on-surface-variant mt-2 tracking-widest uppercase">
-                {itemCode}
-              </span>
-            </div>
-
-            {/* Drop-off Instructions Card */}
-            <div className="bg-surface-container rounded-xl p-4 mb-6 w-full relative z-10 text-left flex items-start gap-3 border border-outline-variant/20">
-              <span className="material-symbols-outlined text-secondary text-xl shrink-0 mt-0.5 filled">
-                location_on
-              </span>
-              <div>
-                <p className="font-label-bold text-xs text-on-surface mb-0.5">
-                  Drop-off Instructions
-                </p>
-                <p className="font-body-md text-xs text-on-surface-variant">
-                  Drop this at <strong className="text-on-surface font-semibold">{assignedHub.name}</strong> within 48hrs.
-                </p>
+              
+              {/* Kolam Dot Logo Watermark in center of QR */}
+              <div className="absolute w-7 h-7 rounded-full bg-[#7B2D00] text-[#F5C842] flex items-center justify-center shadow-xs pointer-events-none ring-2 ring-white">
+                <span className="text-xs font-bold font-jakarta">FB</span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col w-full gap-3 relative z-10">
-              <Button
-                variant="primary"
-                fullWidth
-                size="md"
-                onClick={handleDownloadTag}
-                icon={<span className="material-symbols-outlined text-lg">download</span>}
-              >
-                Download Tag
-              </Button>
+            {/* Reference Number in JetBrains Mono 18px Bold */}
+            <div className="flex flex-col items-center">
+              <span className="font-mono text-lg sm:text-xl font-bold text-[#7B2D00] tracking-wider">
+                #{itemCode}
+              </span>
+              <span className="text-[11px] text-[#8C765C] font-inter">
+                FindBack Unique Item Identifier
+              </span>
+            </div>
 
-              <Button
-                variant="secondary"
-                fullWidth
-                size="md"
-                onClick={handleShare}
-                icon={<span className="material-symbols-outlined text-lg">share</span>}
-              >
-                Share
-              </Button>
-
-              <button
-                type="button"
-                onClick={handleViewStatus}
-                className="w-full mt-1 py-2 text-xs font-label-bold text-primary hover:underline flex items-center justify-center gap-1"
-              >
-                <span>Track Status in Hub Timeline</span>
-                <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </button>
+            {/* Item Details Row: Category | Date | Hub Name */}
+            <div className="w-full grid grid-cols-3 gap-2 pt-3 border-t border-[#E8D5B7] text-left">
+              <div>
+                <span className="block text-[10px] uppercase font-inter text-[#8C765C]">Category</span>
+                <span className="block text-xs font-jakarta font-semibold text-[#2B1810] truncate">
+                  {activeItem?.category || 'Wallet'}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase font-inter text-[#8C765C]">Date</span>
+                <span className="block text-xs font-jakarta font-semibold text-[#2B1810]">
+                  {dateStr}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase font-inter text-[#8C765C]">Hub</span>
+                <span className="block text-xs font-jakarta font-semibold text-[#2B1810] truncate">
+                  {assignedHub.tamil_name || assignedHub.name}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Emotional Footer (Matching Stitch Image 10) */}
-          <div className="mt-8 text-center px-4">
-            <span className="material-symbols-outlined text-secondary text-3xl mb-1 filled inline-block">
-              favorite
-            </span>
-            <p className="text-base font-serif italic text-primary font-medium">
-              You're making a difference.
-            </p>
-            <p className="text-xs font-body-md text-on-surface-variant mt-1">
-              Thank you for helping reunite someone with what matters.
-            </p>
+          {/* Perforated coupon effect at bottom of card (dashed line + half circles on edges) */}
+          <div className="relative w-full py-1">
+            {/* Left cutout notch */}
+            <div className="absolute left-[-10px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#F7F0E6] border-r border-[#E8D5B7]" />
+            {/* Right cutout notch */}
+            <div className="absolute right-[-10px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#F7F0E6] border-l border-[#E8D5B7]" />
+            {/* Dashed perforation line */}
+            <div className="border-t-2 border-dashed border-[#E8D5B7] mx-5" />
+          </div>
+
+          {/* Fine print footer strip */}
+          <div className="p-3 px-5 bg-[#F7F0E6]/60 flex items-center justify-between text-xs text-[#614436]">
+            <span>Finder Reward on Recovery:</span>
+            <span className="font-jakarta font-bold text-[#2E7D6B] text-sm">₹60.00</span>
           </div>
         </div>
+
+        {/* ACTION BUTTONS */}
+        <div className="w-full flex flex-col gap-2.5 pt-1">
+          {/* Button 1: "QR Save பண்ணு (Save QR Code)" — cream fill, rust border, rust text */}
+          <button
+            type="button"
+            onClick={handleSaveQR}
+            className="w-full py-3 px-4 bg-[#F7F0E6] border-2 border-[#7B2D00] text-[#7B2D00] hover:bg-[#E8D5B7]/40 active:scale-98 rounded-xl font-jakarta font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+          >
+            <IconDownload size={18} stroke={2.2} />
+            <span>QR Save பண்ணு (Save QR Code)</span>
+          </button>
+
+          {/* Button 2: "WhatsApp-ல் Share பண்ணு" — WhatsApp green (#25D366), white text, WhatsApp icon */}
+          <button
+            type="button"
+            onClick={handleWhatsAppShare}
+            className="w-full py-3 px-4 bg-[#25D366] text-white hover:brightness-105 active:scale-98 rounded-xl font-jakarta font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+          >
+            <IconBrandWhatsapp size={20} stroke={2.2} />
+            <span>WhatsApp-ல் Share பண்ணு</span>
+          </button>
+
+          {/* Back link: "Dashboard-க்கு திரும்பு (Return to Dashboard)" — text only, rust */}
+          <button
+            type="button"
+            onClick={() => navigateTo('role-selection')}
+            className="pt-2 font-tiro text-sm text-[#7B2D00] hover:underline cursor-pointer flex items-center justify-center gap-1"
+          >
+            <IconArrowLeft size={16} />
+            <span>Dashboard-க்கு திரும்பு (Return to Dashboard)</span>
+          </button>
+        </div>
+
       </main>
 
       <BottomNavBar />

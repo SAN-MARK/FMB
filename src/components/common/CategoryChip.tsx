@@ -11,11 +11,20 @@ interface CategoryChipProps {
 export const CATEGORIES: ItemCategory[] = [
   'Phone',
   'Wallet',
+  'Keys',
   'Documents',
   'Jewellery',
-  'Keys',
   'Other'
 ];
+
+export const CATEGORY_TAMIL_LABELS: Record<ItemCategory, string> = {
+  Phone: 'Phone',
+  Wallet: 'Wallet பை',
+  Keys: 'Keys சாவி',
+  Documents: 'Documents ஆவணம்',
+  Jewellery: 'நகை Jewellery',
+  Other: 'மற்றவை Other'
+};
 
 export const CategoryChip: React.FC<CategoryChipProps> = ({
   category,
@@ -28,17 +37,17 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
       type="button"
       onClick={onClick}
       className={`
-        px-4 py-2 rounded-full font-label-bold text-sm transition-all duration-200 cursor-pointer select-none
+        px-3.5 py-2.5 rounded-xl font-jakarta font-medium text-xs md:text-sm transition-all duration-150 cursor-pointer select-none flex items-center justify-between gap-1.5
         ${
           isSelected
-            ? 'border-2 border-primary bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20 scale-[1.02]'
-            : 'border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+            ? 'bg-[#C8541A] text-white border border-[#C8541A] shadow-[0_4px_12px_rgba(123,45,0,0.18)] scale-[1.02]'
+            : 'bg-[#F7F0E6] border border-[#E8D5B7] text-[#2B1810] hover:border-[#C8541A]/50 hover:bg-[#F0E6D6]'
         }
       `}
     >
-      <span>{category}</span>
+      <span>{CATEGORY_TAMIL_LABELS[category] || category}</span>
       {typeof count === 'number' && (
-        <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${isSelected ? 'bg-primary text-white' : 'bg-surface-container-high'}`}>
+        <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-semibold ${isSelected ? 'bg-white/25 text-white' : 'bg-[#E8D5B7] text-[#2B1810]'}`}>
           {count}
         </span>
       )}

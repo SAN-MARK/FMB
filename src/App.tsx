@@ -10,6 +10,8 @@ import { ItemReceivedScreen } from './screens/ItemReceivedScreen';
 import { SearchLostScreen } from './screens/SearchLostScreen';
 import { ActiveCasesScreen } from './screens/ActiveCasesScreen';
 import { HubOperatorScreen } from './screens/HubOperatorScreen';
+import { ProofOfOwnershipScreen } from './screens/ProofOfOwnershipScreen';
+import { DesignSystemScreen } from './screens/DesignSystemScreen';
 import { AuthModal } from './components/common/AuthModal';
 
 const AppContent: React.FC = () => {
@@ -20,7 +22,8 @@ const AppContent: React.FC = () => {
     errorMessage, 
     successNotification, 
     dismissError, 
-    clearNotification 
+    clearNotification,
+    navigateTo
   } = useApp();
 
   // If auth is not yet initialized from Supabase storage/session, show subtle loader
@@ -58,6 +61,10 @@ const AppContent: React.FC = () => {
         return <ItemReceivedScreen />;
       case 'search-lost':
         return <SearchLostScreen />;
+      case 'proof-of-ownership':
+        return <ProofOfOwnershipScreen />;
+      case 'design-system':
+        return <DesignSystemScreen />;
       case 'active-cases':
         return <ActiveCasesScreen />;
       case 'hub-console':
@@ -94,6 +101,32 @@ const AppContent: React.FC = () => {
 
       {/* Screen Router */}
       {renderScreen()}
+
+      {/* Quick Access Floating Pill for Design System & Hub Console */}
+      <div className="fixed bottom-3 right-3 z-40 hidden md:flex items-center gap-2 bg-[#2B1810]/90 backdrop-blur-xs p-1.5 rounded-full border border-[#E8D5B7]/40 shadow-xl text-[11px] font-jakarta">
+        <button
+          type="button"
+          onClick={() => navigateTo('design-system')}
+          className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+            currentScreen === 'design-system'
+              ? 'bg-[#C8541A] text-white font-bold'
+              : 'text-[#E8D5B7] hover:text-white'
+          }`}
+        >
+          🎨 Design System
+        </button>
+        <button
+          type="button"
+          onClick={() => navigateTo('hub-console')}
+          className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+            currentScreen === 'hub-console'
+              ? 'bg-[#1A3A5C] text-white font-bold'
+              : 'text-[#E8D5B7] hover:text-white'
+          }`}
+        >
+          🏢 Hub Console
+        </button>
+      </div>
 
       {/* Authentication & Persona Dialog */}
       <AuthModal />

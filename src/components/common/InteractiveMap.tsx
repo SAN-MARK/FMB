@@ -1,243 +1,269 @@
 import React, { useState } from 'react';
 import { Coordinates } from '../../types';
+import { INITIAL_HUBS } from '../../data/mockData';
+import { IconMapPin, IconCrosshair, IconLayersIntersect } from '@tabler/icons-react';
 
 interface InteractiveMapProps {
   locationName: string;
-  coordinates: Coordinates;
+  coordinates?: Coordinates;
   onLocationChange?: (locationName: string, coords: Coordinates) => void;
   isEditable?: boolean;
-  hubName?: string;
+  selectedHubId?: string;
+  onHubSelect?: (hubId: string) => void;
   heightClass?: string;
   badgeLabel?: string;
+  showAllHubs?: boolean;
 }
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   locationName,
-  coordinates,
+  coordinates = { lat: 13.0418, lng: 80.2341 }, // T. Nagar default
   onLocationChange,
   isEditable = true,
-  hubName,
-  heightClass = 'h-48 md:h-56',
-  badgeLabel = 'Auto-pinned Location'
+  selectedHubId,
+  onHubSelect,
+  heightClass = 'h-56 sm:h-64',
+  badgeLabel = 'Chennai Operational Grid',
+  showAllHubs = true
 }) => {
-  const [mapMode, setMapMode] = useState<'vector' | 'satellite' | 'terrain'>('vector');
-  const [isEditingModalOpen, setIsEditingModalOpen] = useState(false);
-  const [customAddress, setCustomAddress] = useState(locationName);
+  const [mapMode, setMapMode] = useState<'standard' | 'satellite' | 'terrain'>('standard');
+  const [activePin, setActivePin] = useState<string | null>(selectedHubId || 'hub-chennai-tnagar-02');
   const [isLocating, setIsLocating] = useState(false);
 
-  const handleLocateMe = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
-      return;
-    }
+  // Chennai Hub Locations with coordinate offsets for the responsive SVG canvas
+  const chennaiPins = [
+    { id: 'hub-chennai-central-05', name: 'Central Rail Hub', tamil: 'சென்ட்ரல் Hub', x: 260, y: 55, lat: 13.0827, lng: 80.2707 },
+    { id: 'hub-chennai-annanagar-04', name: 'Anna Nagar Hub', tamil: 'அண்ணா நகர் Hub', x: 140, y: 70, lat: 13.0850, lng: 80.2101 },
+    { id: 'hub-chennai-tnagar-02', name: 'T. Nagar Hub', tamil: 'T.நகர் Hub', x: 190, y: 135, lat: 13.0418, lng: 80.2341 },
+    { id: 'hub-chennai-marina', name: 'Marina Beach Hub', tamil: 'மெரினா கடற்கரை', x: 295, y: 125, lat: 13.0500, lng: 80.2824 },
+    { id: 'hub-chennai-adyar-03', name: 'Adyar Transit Hub', tamil: 'அடையாறு Hub', x: 250, y: 190, lat: 13.0012, lng: 80.2565 },
+    { id: 'hub-chennai-velachery-01', name: 'Velachery Civic Hub', tamil: 'வேளச்சேரி Hub', x: 165, y: 220, lat: 12.9756, lng: 80.2207 }
+  ];
+
+  const handlePinClick = (pin: typeof chennaiPins[0]) => {
+    setActivePin(pin.id);
+    if (onHubSelect) onHubSelect(pin.id);
+    if (onLocationChange) onLocationChange(pin.name, { lat: pin.lat, lng: pin.lng });
+  };
+
+  const handleLocateGPS = () => {
+    if (!navigator.geolocation) return;
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setIsLocating(false);
-        const newCoords = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude
-        };
-        const detectedName = `Lat: ${newCoords.lat.toFixed(4)}, Lng: ${newCoords.lng.toFixed(4)}`;
-        if (onLocationChange) {
-          onLocationChange(detectedName, newCoords);
-        }
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const label = `Chennai GPS (${coords.lat.toFixed(3)}°N, ${coords.lng.toFixed(3)}°E)`;
+        if (onLocationChange) onLocationChange(label, coords);
       },
-      (err) => {
+      () => {
         setIsLocating(false);
-        console.warn('Geolocation denied or failed, using fallback:', err);
-        setIsEditingModalOpen(true);
       },
-      { timeout: 8000, enableHighAccuracy: true }
+      { timeout: 6000 }
     );
   };
 
-  const handleManualSave = () => {
-    if (customAddress.trim() && onLocationChange) {
-      onLocationChange(customAddress.trim(), coordinates);
-    }
-    setIsEditingModalOpen(false);
-  };
-
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border border-outline-variant/50 ambient-shadow-card bg-surface-container-lowest group">
-      {/* Map Canvas Visual Layer */}
-      <div className={`w-full ${heightClass} relative overflow-hidden bg-slate-100`}>
-        {mapMode === 'satellite' ? (
-          <img
-            src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1000&q=80"
-            alt="Satellite Map Grid"
-            className="w-full h-full object-cover filter contrast-110"
-          />
-        ) : mapMode === 'terrain' ? (
-          <img
-            src="https://images.unsplash.com/photo-1508873696983-2df57046475a?auto=format&fit=crop&w=1000&q=80"
-            alt="Terrain Map Grid"
-            className="w-full h-full object-cover filter brightness-95"
-          />
-        ) : (
-          /* High-fidelity Vector Map Grid */
-          <div className="w-full h-full relative bg-[#f1f5f9] flex items-center justify-center">
-            <svg
-              className="w-full h-full absolute inset-0 opacity-80"
-              xmlns="http://www.w3.org/2000/svg"
-              preserveAspectRatio="none"
-              viewBox="0 0 400 240"
+    <div className="relative w-full rounded-2xl overflow-hidden border border-[#E8D5B7] ambient-shadow-card bg-[#F7F0E6] flex flex-col">
+      
+      {/* Top Map Bar with View Toggles (Standard | Satellite | Terrain) */}
+      <div className="flex items-center justify-between px-3 py-2 bg-[#FFFFFF] border-b border-[#E8D5B7] z-10">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#2E7D6B] animate-pulse" />
+          <span className="font-jakarta font-semibold text-xs text-[#2B1810]">
+            {badgeLabel}
+          </span>
+        </div>
+
+        {/* View toggle buttons: Standard | Satellite | Terrain — rust underline on active */}
+        <div className="flex items-center gap-2">
+          {(['standard', 'satellite', 'terrain'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setMapMode(mode)}
+              className={`relative px-2 py-1 text-xs font-jakarta capitalize transition-colors cursor-pointer ${
+                mapMode === mode ? 'text-[#7B2D00] font-bold' : 'text-[#8C765C] hover:text-[#2B1810]'
+              }`}
             >
-              {/* Background Grid Roads */}
-              <rect width="400" height="240" fill="#f4f6f8" />
-              {/* Water feature */}
-              <path d="M 320 0 Q 340 120 400 180 L 400 0 Z" fill="#e0f2fe" opacity="0.7" />
-              {/* Major Roads */}
-              <path d="M 0 60 L 400 80" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" />
-              <path d="M 0 60 L 400 80" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+              <span>{mode}</span>
+              {mapMode === mode && (
+                <span className="absolute bottom-0 left-1 right-1 h-[2px] bg-[#7B2D00] rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Map Graphic Area */}
+      <div className={`w-full ${heightClass} relative overflow-hidden select-none`}>
+        {mapMode === 'satellite' ? (
+          /* Satellite View simulation */
+          <div className="w-full h-full relative bg-[#1c2c38]">
+            <img 
+              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1000&q=80" 
+              alt="Satellite Chennai View" 
+              className="w-full h-full object-cover filter contrast-125 brightness-90"
+            />
+            <div className="absolute inset-0 bg-[#1A3A5C]/25" />
+          </div>
+        ) : mapMode === 'terrain' ? (
+          /* Terrain View simulation */
+          <div className="w-full h-full relative bg-[#33412a]">
+            <img 
+              src="https://images.unsplash.com/photo-1508873696983-2df57046475a?auto=format&fit=crop&w=1000&q=80" 
+              alt="Terrain Chennai View" 
+              className="w-full h-full object-cover filter contrast-110 brightness-95"
+            />
+            <div className="absolute inset-0 bg-[#7B2D00]/15" />
+          </div>
+        ) : (
+          /* Standard Chennai Road Map Layout with Bay of Bengal coastline */
+          <div className="w-full h-full relative bg-[#F7F0E6] flex items-center justify-center">
+            <svg
+              className="w-full h-full absolute inset-0"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 380 260"
+              preserveAspectRatio="xMidYMid slice"
+            >
+              {/* Land Base (Vepery Cream) */}
+              <rect width="380" height="260" fill="#F7F0E6" />
               
-              <path d="M 0 160 Q 200 140 400 180" stroke="#ffffff" strokeWidth="14" strokeLinecap="round" />
-              <path d="M 0 160 Q 200 140 400 180" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+              {/* Bay of Bengal (Ocean water on the East/Right side) */}
+              <path
+                d="M 310 0 C 300 40 305 90 315 130 C 322 170 305 210 320 260 L 380 260 L 380 0 Z"
+                fill="#1A3A5C"
+                opacity="0.22"
+              />
+              <path
+                d="M 320 0 C 310 40 315 90 325 130 C 332 170 315 210 330 260 L 380 260 L 380 0 Z"
+                fill="#1A3A5C"
+                opacity="0.3"
+              />
+              
+              {/* Sandy Coastline (Marina Beach) */}
+              <path
+                d="M 305 0 C 295 40 300 90 310 130 C 317 170 300 210 315 260"
+                stroke="#E8D5B7"
+                strokeWidth="7"
+                fill="none"
+              />
 
-              <path d="M 120 0 L 160 240" stroke="#ffffff" strokeWidth="10" />
-              <path d="M 120 0 L 160 240" stroke="#cbd5e1" strokeWidth="1.5" />
+              {/* Cooum & Adyar Rivers */}
+              <path d="M 0 90 Q 140 100 220 85 T 310 75" fill="none" stroke="#B9D5E8" strokeWidth="4" strokeLinecap="round" />
+              <path d="M 0 195 Q 120 180 220 190 T 315 190" fill="none" stroke="#B9D5E8" strokeWidth="5" strokeLinecap="round" />
 
-              <path d="M 280 0 L 260 240" stroke="#ffffff" strokeWidth="10" />
-              <path d="M 280 0 L 260 240" stroke="#cbd5e1" strokeWidth="1.5" />
+              {/* Major Arterial Roads: Anna Salai / Mount Road (Central to Guindy) */}
+              <path d="M 260 55 L 190 135 L 120 220" stroke="#FFFFFF" strokeWidth="9" strokeLinecap="round" />
+              <path d="M 260 55 L 190 135 L 120 220" stroke="#C8541A" strokeWidth="2.5" strokeOpacity="0.45" strokeLinecap="round" />
 
-              {/* Park Blocks */}
-              <rect x="40" y="90" width="60" height="50" rx="4" fill="#dcfce7" opacity="0.6" />
-              <rect x="180" y="30" width="80" height="40" rx="4" fill="#dcfce7" opacity="0.6" />
-              <rect x="290" y="100" width="70" height="60" rx="4" fill="#f1f5f9" />
+              {/* Poonamallee High Road */}
+              <path d="M 0 65 L 260 55" stroke="#FFFFFF" strokeWidth="7" />
+              <path d="M 0 65 L 260 55" stroke="#DCCBB0" strokeWidth="1.5" />
+
+              {/* OMR / IT Corridor (Adyar southwards) */}
+              <path d="M 250 190 L 250 260" stroke="#FFFFFF" strokeWidth="8" strokeLinecap="round" />
+              <path d="M 250 190 L 250 260" stroke="#C8541A" strokeWidth="2" strokeOpacity="0.4" />
+
+              {/* Inner Ring Road / 100ft Road (Anna Nagar to Velachery) */}
+              <path d="M 140 70 L 140 150 L 165 220" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" />
+              <path d="M 140 70 L 140 150 L 165 220" stroke="#DCCBB0" strokeWidth="1.5" />
+
+              {/* Marina Kamarajar Salai Beach Road */}
+              <path d="M 260 55 L 305 100 L 295 160 L 250 190" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" />
+              <path d="M 260 55 L 305 100 L 295 160 L 250 190" stroke="#1A3A5C" strokeWidth="1.5" strokeOpacity="0.4" />
+
+              {/* Area Labels */}
+              <text x="330" y="30" fill="#1A3A5C" fontSize="9" fontFamily="Plus Jakarta Sans" fontWeight="600" opacity="0.8">BAY OF BENGAL</text>
+              <text x="330" y="42" fill="#1A3A5C" fontSize="8" fontFamily="Tiro Tamil" opacity="0.8">வங்காள விரிகுடா</text>
+              <text x="280" y="110" fill="#7B2D00" fontSize="8" fontFamily="Inter" opacity="0.7">Marina</text>
+              <text x="175" y="125" fill="#7B2D00" fontSize="8" fontFamily="Inter" opacity="0.7">T. Nagar</text>
+              <text x="115" y="60" fill="#7B2D00" fontSize="8" fontFamily="Inter" opacity="0.7">Anna Nagar</text>
+              <text x="150" y="240" fill="#7B2D00" fontSize="8" fontFamily="Inter" opacity="0.7">Velachery</text>
+              <text x="235" y="175" fill="#7B2D00" fontSize="8" fontFamily="Inter" opacity="0.7">Adyar</text>
             </svg>
           </div>
         )}
 
-        {/* Central Map Pin Marker */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="relative -translate-y-4 flex flex-col items-center animate-bounce-short">
-            <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-lg ring-4 ring-white">
-              <span className="material-symbols-outlined text-xl filled">
-                {hubName ? 'store' : 'location_on'}
-              </span>
+        {/* Map Pins: Marina Rust kolam-dot style with tails */}
+        {showAllHubs && chennaiPins.map((pin) => {
+          const isSelected = activePin === pin.id;
+          return (
+            <div
+              key={pin.id}
+              onClick={() => handlePinClick(pin)}
+              className="absolute z-20 transform -translate-x-1/2 -translate-y-full cursor-pointer group transition-transform duration-200 hover:scale-110"
+              style={{ left: `${(pin.x / 380) * 100}%`, top: `${(pin.y / 260) * 100}%` }}
+            >
+              {/* Kolam Dot with Tail - Marina Rust Fill */}
+              <div className="relative flex flex-col items-center">
+                {/* Active Pulse Ring */}
+                {isSelected && (
+                  <span className="absolute -inset-1.5 rounded-full bg-[#C8541A]/30 animate-ping" />
+                )}
+
+                {/* Kolam Dot Pin Body */}
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-[0_3px_8px_rgba(123,45,0,0.35)] transition-all ${
+                  isSelected ? 'bg-[#7B2D00] text-[#F5C842] ring-2 ring-[#F5C842]' : 'bg-[#7B2D00] text-white hover:bg-[#C8541A]'
+                }`}>
+                  {/* Traditional Kolam flower / 4-petal dot symbol */}
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                    <circle cx="8" cy="8" r="2" />
+                    <circle cx="8" cy="4" r="1" />
+                    <circle cx="8" cy="12" r="1" />
+                    <circle cx="4" cy="8" r="1" />
+                    <circle cx="12" cy="8" r="1" />
+                  </svg>
+                </div>
+
+                {/* Pin Tail */}
+                <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-[#7B2D00] -mt-[1px]" />
+
+                {/* Pin Label Tooltip */}
+                <div className={`mt-0.5 px-1.5 py-0.5 rounded-md whitespace-nowrap text-[10px] font-jakarta font-semibold shadow-xs transition-opacity ${
+                  isSelected ? 'bg-[#2B1810] text-white opacity-100' : 'bg-[#FFFFFF]/90 text-[#7B2D00] border border-[#E8D5B7] group-hover:opacity-100 opacity-80'
+                }`}>
+                  {pin.tamil}
+                </div>
+              </div>
             </div>
-            <div className="w-2.5 h-2.5 bg-primary rotate-45 -mt-1 shadow-sm" />
-            <div className="w-6 h-2 bg-primary/20 rounded-full blur-[2px] mt-1" />
-          </div>
-        </div>
+          );
+        })}
 
-        {/* Map Layer Switcher */}
-        <div className="absolute top-2 right-2 flex items-center bg-surface/90 backdrop-blur-md rounded-lg p-1 border border-outline-variant/40 shadow-sm z-20">
-          <button
-            type="button"
-            onClick={() => setMapMode('vector')}
-            className={`px-2 py-1 text-[11px] font-label-bold rounded ${
-              mapMode === 'vector' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Map
-          </button>
-          <button
-            type="button"
-            onClick={() => setMapMode('satellite')}
-            className={`px-2 py-1 text-[11px] font-label-bold rounded ${
-              mapMode === 'satellite' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Sat
-          </button>
-          <button
-            type="button"
-            onClick={() => setMapMode('terrain')}
-            className={`px-2 py-1 text-[11px] font-label-bold rounded ${
-              mapMode === 'terrain' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Terrain
-          </button>
-        </div>
-
-        {/* GPS Locate Me Button */}
+        {/* GPS Auto-detect Button */}
         {isEditable && (
           <button
             type="button"
-            onClick={handleLocateMe}
-            className="absolute top-2 left-2 w-8 h-8 rounded-lg bg-surface/90 backdrop-blur-md border border-outline-variant/40 shadow-sm flex items-center justify-center text-primary hover:bg-white active:scale-95 transition-all z-20"
-            title="Auto-detect My Location"
+            onClick={handleLocateGPS}
+            className="absolute bottom-3 right-3 z-30 p-2 bg-[#FFFFFF] border border-[#E8D5B7] rounded-xl shadow-md text-[#7B2D00] hover:bg-[#F7F0E6] active:scale-95 transition-all cursor-pointer flex items-center gap-1 text-xs font-jakarta font-medium"
+            title="Auto-detect Chennai GPS Location"
           >
-            <span className={`material-symbols-outlined text-lg ${isLocating ? 'animate-spin' : ''}`}>
-              my_location
-            </span>
+            <IconCrosshair size={16} className={isLocating ? 'animate-spin text-[#C8541A]' : 'text-[#7B2D00]'} />
+            <span className="hidden sm:inline">GPS கண்டறி</span>
           </button>
         )}
-
-        {/* Bottom Floating Location Badge (Matching Design) */}
-        <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-surface/95 backdrop-blur-md rounded-xl px-3 py-2 flex items-center justify-between border border-outline-variant/40 shadow-sm z-20">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <span className="material-symbols-outlined text-primary text-xl shrink-0">
-              location_on
-            </span>
-            <div className="flex flex-col truncate">
-              <span className="font-label-bold text-[11px] md:text-[12px] text-on-surface">
-                {badgeLabel}
-              </span>
-              <span className="font-body-md text-[10px] md:text-[11px] text-on-surface-variant truncate">
-                {locationName || 'Central Park, NY'}
-              </span>
-            </div>
-          </div>
-
-          {isEditable && (
-            <button
-              type="button"
-              onClick={() => setIsEditingModalOpen(true)}
-              className="text-xs font-label-bold text-primary hover:underline px-2 py-1 rounded bg-primary/5 shrink-0"
-            >
-              Edit
-            </button>
-          )}
-        </div>
       </div>
 
-      {/* Edit Address Modal */}
-      {isEditingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-background/40 backdrop-blur-sm">
-          <div className="bg-surface-container-lowest rounded-2xl p-6 max-w-sm w-full ambient-shadow-modal border border-outline-variant/40 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-bold text-primary">Specify Location</h3>
-              <button
-                type="button"
-                onClick={() => setIsEditingModalOpen(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-            <p className="text-xs text-on-surface-variant">
-              Enter the landmark, street, or venue where the item was found:
-            </p>
-            <input
-              type="text"
-              value={customAddress}
-              onChange={(e) => setCustomAddress(e.target.value)}
-              placeholder="e.g., Central Park / 5th Ave Fountain"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant text-sm font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-            />
-            <div className="flex gap-2 justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setIsEditingModalOpen(false)}
-                className="px-4 py-2 text-xs font-label-bold text-on-surface-variant hover:bg-surface-container-low rounded-full"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleManualSave}
-                className="px-5 py-2 text-xs font-label-bold bg-primary text-white rounded-full hover:bg-primary/90 shadow-sm"
-              >
-                Save Location
-              </button>
-            </div>
+      {/* Selected Location Summary Bar */}
+      <div className="p-3 bg-[#FFFFFF] border-t border-[#E8D5B7] flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="w-7 h-7 rounded-lg bg-[#7B2D00]/10 text-[#7B2D00] flex items-center justify-center shrink-0">
+            <IconMapPin size={16} />
+          </div>
+          <div className="truncate">
+            <span className="block text-xs font-jakarta font-semibold text-[#2B1810] truncate">
+              {locationName || 'சென்னை செயல்பாட்டு தளம் (Chennai Central Operations)'}
+            </span>
+            <span className="block text-[11px] text-[#614436] truncate">
+              Near Marina & Mount Road transit corridor
+            </span>
           </div>
         </div>
-      )}
+
+        <span className="shrink-0 px-2.5 py-0.5 bg-[#DCFCE7] text-[#14532D] border border-[#2E7D6B]/30 rounded-full text-[10px] font-jakarta font-semibold">
+          Active Hub Grid
+        </span>
+      </div>
     </div>
   );
 };

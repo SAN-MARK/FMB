@@ -32,7 +32,9 @@ export type ScreenName =
   | 'item-received'
   | 'search-lost'
   | 'active-cases'
-  | 'hub-console';
+  | 'hub-console'
+  | 'proof-of-ownership'
+  | 'design-system';
 
 interface AppContextType {
   user: User | null;

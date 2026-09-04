@@ -1,17 +1,22 @@
 import React from 'react';
-import { useApp, ScreenName } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext';
+import { 
+  IconHome, 
+  IconSearch, 
+  IconHandStop, 
+  IconCoinRupee 
+} from '@tabler/icons-react';
 
 export const BottomNavBar: React.FC = () => {
-  const { currentScreen, navigateTo, openAuthModal, user, setRole } = useApp();
+  const { currentScreen, navigateTo, setRole, user, openAuthModal } = useApp();
 
   const isHome = currentScreen === 'role-selection' || currentScreen === 'splash';
   const isSearch = currentScreen === 'search-lost';
   const isReport = currentScreen === 'report-found' || currentScreen === 'drop-off' || currentScreen === 'tag-generated';
-  const isProfile = currentScreen === 'active-cases' || currentScreen === 'hub-console';
+  const isRewards = currentScreen === 'active-cases' || currentScreen === 'hub-console';
 
-  const handleReportClick = () => {
-    setRole('FINDER');
-    navigateTo('report-found');
+  const handleHomeClick = () => {
+    navigateTo('role-selection');
   };
 
   const handleSearchClick = () => {
@@ -19,86 +24,94 @@ export const BottomNavBar: React.FC = () => {
     navigateTo('search-lost');
   };
 
-  const handleHomeClick = () => {
-    navigateTo('role-selection');
+  const handleReportClick = () => {
+    setRole('FINDER');
+    navigateTo('report-found');
   };
 
-  const handleProfileClick = () => {
+  const handleRewardsClick = () => {
     if (user) {
-      if (user.role_default === 'HUB_STAFF' || user.role_default === 'ADMIN') {
-        navigateTo('hub-console');
-      } else {
-        navigateTo('active-cases');
-      }
+      navigateTo('active-cases');
     } else {
       openAuthModal();
     }
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center px-4 pt-2 bg-surface/95 backdrop-blur-md shadow-[0_-4px_12px_rgba(2,36,72,0.05)] border-t border-outline-variant/20 pb-safe md:hidden h-18">
+    <nav 
+      id="chennai-bottom-nav"
+      className="fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center px-4 bg-[#F7F0E6] border-t border-[#E8D5B7] pb-safe md:hidden h-16 shadow-[0_-4px_16px_rgba(123,45,0,0.06)]"
+    >
       {/* Home Tab */}
       <button
         onClick={handleHomeClick}
-        className={`flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all ${
-          isHome ? 'text-primary scale-105' : 'text-on-surface-variant hover:text-on-surface'
-        }`}
+        className="relative flex flex-col items-center justify-center flex-1 h-full py-1 cursor-pointer transition-colors"
       >
-        <span className={`material-symbols-outlined text-2xl ${isHome ? 'filled font-bold' : ''}`}>
-          home
+        <IconHome 
+          size={22} 
+          className={isHome ? 'text-[#7B2D00]' : 'text-[#A89279] hover:text-[#7B2D00]'} 
+          stroke={isHome ? 2.3 : 1.6} 
+        />
+        <span className={`font-jakarta text-[11px] mt-0.5 ${isHome ? 'text-[#7B2D00] font-bold' : 'text-[#8C765C]'}`}>
+          Home
         </span>
-        <span className="font-label-bold text-[10px] mt-0.5">Home</span>
+        {isHome && (
+          <span className="absolute bottom-1 w-6 h-[2px] bg-[#7B2D00] rounded-full" />
+        )}
       </button>
 
       {/* Search Tab */}
       <button
         onClick={handleSearchClick}
-        className={`flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all ${
-          isSearch ? 'text-primary scale-105' : 'text-on-surface-variant hover:text-on-surface'
-        }`}
+        className="relative flex flex-col items-center justify-center flex-1 h-full py-1 cursor-pointer transition-colors"
       >
-        <span className={`material-symbols-outlined text-2xl ${isSearch ? 'filled font-bold' : ''}`}>
-          search
+        <IconSearch 
+          size={22} 
+          className={isSearch ? 'text-[#7B2D00]' : 'text-[#A89279] hover:text-[#7B2D00]'} 
+          stroke={isSearch ? 2.3 : 1.6} 
+        />
+        <span className={`font-jakarta text-[11px] mt-0.5 ${isSearch ? 'text-[#7B2D00] font-bold' : 'text-[#8C765C]'}`}>
+          Search
         </span>
-        <span className="font-label-bold text-[10px] mt-0.5">Search</span>
+        {isSearch && (
+          <span className="absolute bottom-1 w-6 h-[2px] bg-[#7B2D00] rounded-full" />
+        )}
       </button>
 
-      {/* Report Active / Center Tab */}
+      {/* Report Tab */}
       <button
         onClick={handleReportClick}
-        className={`flex flex-col items-center justify-center px-4 py-1.5 rounded-full transition-all ${
-          isReport
-            ? 'bg-primary-container text-on-primary-container shadow-md scale-100'
-            : 'text-on-surface-variant hover:bg-surface-container-high'
-        }`}
+        className="relative flex flex-col items-center justify-center flex-1 h-full py-1 cursor-pointer transition-colors"
       >
-        <span
-          className={`material-symbols-outlined text-2xl ${
-            isReport ? 'filled text-on-primary-container' : ''
-          }`}
-        >
-          add_circle
-        </span>
-        <span
-          className={`font-label-bold text-[10px] ${
-            isReport ? 'text-on-primary-container font-semibold' : ''
-          }`}
-        >
+        <IconHandStop 
+          size={22} 
+          className={isReport ? 'text-[#C8541A]' : 'text-[#A89279] hover:text-[#C8541A]'} 
+          stroke={isReport ? 2.3 : 1.6} 
+        />
+        <span className={`font-jakarta text-[11px] mt-0.5 ${isReport ? 'text-[#C8541A] font-bold' : 'text-[#8C765C]'}`}>
           Report
         </span>
+        {isReport && (
+          <span className="absolute bottom-1 w-6 h-[2px] bg-[#C8541A] rounded-full" />
+        )}
       </button>
 
-      {/* Profile / Cases Tab */}
+      {/* Rewards Tab */}
       <button
-        onClick={handleProfileClick}
-        className={`flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all ${
-          isProfile ? 'text-primary scale-105' : 'text-on-surface-variant hover:text-on-surface'
-        }`}
+        onClick={handleRewardsClick}
+        className="relative flex flex-col items-center justify-center flex-1 h-full py-1 cursor-pointer transition-colors"
       >
-        <span className={`material-symbols-outlined text-2xl ${isProfile ? 'filled' : ''}`}>
-          person
+        <IconCoinRupee 
+          size={22} 
+          className={isRewards ? 'text-[#7B2D00]' : 'text-[#A89279] hover:text-[#7B2D00]'} 
+          stroke={isRewards ? 2.3 : 1.6} 
+        />
+        <span className={`font-jakarta text-[11px] mt-0.5 ${isRewards ? 'text-[#7B2D00] font-bold' : 'text-[#8C765C]'}`}>
+          Rewards
         </span>
-        <span className="font-label-bold text-[10px] mt-0.5">Profile</span>
+        {isRewards && (
+          <span className="absolute bottom-1 w-6 h-[2px] bg-[#7B2D00] rounded-full" />
+        )}
       </button>
     </nav>
   );
