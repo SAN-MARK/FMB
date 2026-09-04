@@ -2,47 +2,69 @@ import { Hub, FoundItem } from '../types';
 
 export const INITIAL_HUBS: Hub[] = [
   {
+    id: 'hub-chennai-velachery-01',
+    name: 'Velachery Civic Hub',
+    address: '100 Feet Bypass Rd, Velachery, Chennai, Tamil Nadu 600042',
+    lat: 12.9756,
+    lng: 80.2207,
+    hours: '10 PM',
+    photo_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=800&q=80',
+    phone: '+91 44 2244 5566',
+    is_verified: true
+  },
+  {
+    id: 'hub-chennai-tnagar-02',
+    name: 'T. Nagar Commercial Hub',
+    address: '74 Usman Road, T. Nagar, Chennai, Tamil Nadu 600017',
+    lat: 13.0418,
+    lng: 80.2341,
+    hours: '10 PM',
+    photo_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
+    phone: '+91 44 2434 1122',
+    is_verified: true
+  },
+  {
+    id: 'hub-chennai-adyar-03',
+    name: 'Adyar Transit Hub',
+    address: '28 Lattice Bridge Rd, Adyar, Chennai, Tamil Nadu 600020',
+    lat: 13.0012,
+    lng: 80.2565,
+    hours: '9 PM',
+    photo_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80',
+    phone: '+91 44 2491 3344',
+    is_verified: true
+  },
+  {
+    id: 'hub-chennai-annanagar-04',
+    name: 'Anna Nagar Central Hub',
+    address: '2nd Avenue, Roundtana, Anna Nagar, Chennai, Tamil Nadu 600040',
+    lat: 13.0850,
+    lng: 80.2101,
+    hours: '10 PM',
+    photo_url: 'https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=800&q=80',
+    phone: '+91 44 2621 7788',
+    is_verified: true
+  },
+  {
+    id: 'hub-chennai-central-05',
+    name: 'Central Rail & Civic Hub',
+    address: 'Kannappar Thidal, Periyamet, Chennai, Tamil Nadu 600003',
+    lat: 13.0827,
+    lng: 80.2707,
+    hours: '11 PM',
+    photo_url: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=800&q=80',
+    phone: '+91 44 2535 3520',
+    is_verified: true
+  },
+  {
     id: 'hub-downtown-01',
-    name: 'Downtown Civic Hub',
+    name: 'Downtown Civic Hub (SF)',
     address: '124 Market Street, Suite 200, San Francisco, CA 94105',
     lat: 37.7908,
     lng: -122.3995,
     hours: '9 PM',
     photo_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=800&q=80',
     phone: '+1 (415) 555-0192',
-    is_verified: true
-  },
-  {
-    id: 'hub-southside-02',
-    name: 'Southside Hub',
-    address: '850 Mission Bay Blvd, San Francisco, CA 94158',
-    lat: 37.7682,
-    lng: -122.3929,
-    hours: '8 PM',
-    photo_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
-    phone: '+1 (415) 555-0144',
-    is_verified: true
-  },
-  {
-    id: 'hub-marina-03',
-    name: 'Marina Transit Hub',
-    address: '2150 Lombard Street, San Francisco, CA 94123',
-    lat: 37.7995,
-    lng: -122.4385,
-    hours: '10 PM',
-    photo_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80',
-    phone: '+1 (415) 555-0178',
-    is_verified: true
-  },
-  {
-    id: 'hub-chennai-central-04',
-    name: 'Central Rail & Civic Hub',
-    address: 'Kannappar Thidal, Periyamet, Chennai, Tamil Nadu 600003',
-    lat: 13.0827,
-    lng: 80.2707,
-    hours: '10 PM',
-    photo_url: 'https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=800&q=80',
-    phone: '+91 44 2535 3520',
     is_verified: true
   }
 ];

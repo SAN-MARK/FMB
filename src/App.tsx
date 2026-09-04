@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { SplashScreen } from './screens/SplashScreen';
+import { AuthScreen } from './screens/AuthScreen';
 import { RoleSelectionScreen } from './screens/RoleSelectionScreen';
 import { ReportFoundScreen } from './screens/ReportFoundScreen';
 import { DropOffHubScreen } from './screens/DropOffHubScreen';
@@ -12,7 +13,59 @@ import { HubOperatorScreen } from './screens/HubOperatorScreen';
 import { AuthModal } from './components/common/AuthModal';
 
 const AppContent: React.FC = () => {
-  const { currentScreen, errorMessage, successNotification, dismissError, clearNotification } = useApp();
+  const { 
+    currentScreen, 
+    user, 
+    isAuthInitialized, 
+    errorMessage, 
+    successNotification, 
+    dismissError, 
+    clearNotification 
+  } = useApp();
+
+  // If auth is not yet initialized from Supabase storage/session, show subtle loader
+  if (!isAuthInitialized) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="w-10 h-10 border-3 border-primary/20 border-t-primary rounded-full animate-spin mb-3" />
+        <p className="text-xs font-label-bold text-on-surface-variant uppercase tracking-wider">
+          Initializing FindBack...
+        </p>
+      </div>
+    );
+  }
+
+  // Determine active view: If unauthenticated and not splash, gate into AuthScreen
+  const renderScreen = () => {
+    if (!user && currentScreen !== 'splash') {
+      return <AuthScreen />;
+    }
+
+    switch (currentScreen) {
+      case 'splash':
+        return <SplashScreen />;
+      case 'auth':
+        return <AuthScreen />;
+      case 'role-selection':
+        return <RoleSelectionScreen />;
+      case 'report-found':
+        return <ReportFoundScreen />;
+      case 'drop-off':
+        return <DropOffHubScreen />;
+      case 'tag-generated':
+        return <TagGeneratedScreen />;
+      case 'item-received':
+        return <ItemReceivedScreen />;
+      case 'search-lost':
+        return <SearchLostScreen />;
+      case 'active-cases':
+        return <ActiveCasesScreen />;
+      case 'hub-console':
+        return <HubOperatorScreen />;
+      default:
+        return <RoleSelectionScreen />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col justify-start antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
@@ -40,15 +93,7 @@ const AppContent: React.FC = () => {
       )}
 
       {/* Screen Router */}
-      {currentScreen === 'splash' && <SplashScreen />}
-      {currentScreen === 'role-selection' && <RoleSelectionScreen />}
-      {currentScreen === 'report-found' && <ReportFoundScreen />}
-      {currentScreen === 'drop-off' && <DropOffHubScreen />}
-      {currentScreen === 'tag-generated' && <TagGeneratedScreen />}
-      {currentScreen === 'item-received' && <ItemReceivedScreen />}
-      {currentScreen === 'search-lost' && <SearchLostScreen />}
-      {currentScreen === 'active-cases' && <ActiveCasesScreen />}
-      {currentScreen === 'hub-console' && <HubOperatorScreen />}
+      {renderScreen()}
 
       {/* Authentication & Persona Dialog */}
       <AuthModal />

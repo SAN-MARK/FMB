@@ -12,6 +12,7 @@ export type ItemStatus =
 
 export interface User {
   id: string;
+  auth_id?: string;
   name: string;
   email: string;
   phone?: string;

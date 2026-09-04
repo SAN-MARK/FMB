@@ -1,25 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { Button } from './Button';
 import { UserRole } from '../../types';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, closeAuthModal, user, loginWithGoogle, loginDemo, logout, isLoading } = useApp();
-  const [activeTab, setActiveTab] = useState<'signin' | 'roles'>('signin');
-  const [customEmail, setCustomEmail] = useState('');
-  const [customName, setCustomName] = useState('');
+  const { isAuthModalOpen, closeAuthModal, user, loginDemo, logout, navigateTo } = useApp();
 
   if (!isAuthModalOpen) return null;
-
-  const handleCustomLogin = (role: UserRole) => {
-    if (!customName.trim() && !customEmail.trim()) {
-      loginDemo(role);
-      return;
-    }
-    const name = customName.trim() || 'Community Member';
-    const email = customEmail.trim() || 'member@findback.org';
-    loginDemo(role);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-background/40 backdrop-blur-sm animate-fade-in">
@@ -34,7 +21,7 @@ export const AuthModal: React.FC = () => {
               <span className="material-symbols-outlined text-primary text-lg filled">verified</span>
             </div>
             <h2 className="font-serif text-xl font-bold text-primary">
-              {user ? 'Account & Roles' : 'Sign in to FindBack'}
+              {user ? 'Profile & Session' : 'FindBack Authentication'}
             </h2>
           </div>
           <button
@@ -50,20 +37,39 @@ export const AuthModal: React.FC = () => {
           {user ? (
             <div className="space-y-4">
               <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/30 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container font-bold text-lg flex items-center justify-center">
-                  {user.name.charAt(0).toUpperCase()}
+                <div className="w-12 h-12 rounded-full bg-primary text-on-primary font-bold text-lg flex items-center justify-center shrink-0">
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <div className="flex-grow">
-                  <h3 className="font-label-bold text-sm text-on-surface">{user.name}</h3>
-                  <p className="text-xs text-on-surface-variant">{user.email}</p>
-                  <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-label-bold bg-primary/10 text-primary">
-                    Role: {user.role_default || 'FINDER'}
-                  </span>
+                <div className="flex-grow min-w-0">
+                  <h3 className="font-label-bold text-sm text-on-surface truncate">{user.name}</h3>
+                  <p className="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+                    <span className="material-symbols-outlined text-xs text-secondary">call</span>
+                    <span>{user.phone || user.email}</span>
+                  </p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-label-bold bg-primary/10 text-primary">
+                      Role: {user.role_default || 'FINDER'}
+                    </span>
+                    <span className="text-[10px] text-tertiary font-label-bold flex items-center gap-0.5">
+                      <span className="material-symbols-outlined text-[12px] filled">check_circle</span>
+                      <span>Verified Session</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
+              {/* Locked Phone Notice */}
+              <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/40 text-[11px] text-on-surface-variant flex items-start gap-2">
+                <span className="material-symbols-outlined text-sm text-secondary shrink-0 mt-0.5">
+                  lock
+                </span>
+                <span>
+                  <strong>User ID Locked:</strong> Phone number cannot be changed from within the application. Password can only be reset via secure reset dispatch.
+                </span>
+              </div>
+
               <div className="border-t border-outline-variant/20 pt-4">
-                <p className="font-label-bold text-xs text-on-surface-variant mb-2">Switch Active Persona:</p>
+                <p className="font-label-bold text-xs text-on-surface-variant mb-2">Switch Active Persona (Demo):</p>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => loginDemo('FINDER')}
@@ -86,45 +92,33 @@ export const AuthModal: React.FC = () => {
                 </div>
               </div>
 
-              <Button variant="secondary" fullWidth onClick={logout}>
-                Sign Out
+              <Button 
+                variant="secondary" 
+                fullWidth 
+                onClick={async () => {
+                  await logout();
+                  closeAuthModal();
+                }}
+              >
+                Sign Out of FindBack
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-xs text-on-surface-variant text-center">
-                Secure access for finding, tracking, and claiming lost items with verified 24hr recovery.
+              <p className="text-xs text-on-surface-variant text-center leading-relaxed">
+                Sign in with your registered phone number and password to access the FindBack network.
               </p>
 
-              {/* Google OAuth Button */}
               <Button
                 variant="primary"
                 fullWidth
                 size="lg"
-                isLoading={isLoading}
-                onClick={loginWithGoogle}
-                icon={
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path
-                      fill="#EA4335"
-                      d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
-                    />
-                    <path
-                      fill="#4285F4"
-                      d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.6 14.8c-.3-.8-.4-1.8-.4-2.8s.2-2 .4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
-                    />
-                  </svg>
-                }
+                onClick={() => {
+                  closeAuthModal();
+                  navigateTo('auth');
+                }}
               >
-                Continue with Google
+                Go to Sign In / Sign Up Screen
               </Button>
 
               <div className="relative flex items-center justify-center my-4">
@@ -165,3 +159,4 @@ export const AuthModal: React.FC = () => {
     </div>
   );
 };
+
