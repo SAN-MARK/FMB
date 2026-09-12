@@ -14,13 +14,17 @@ import {
 } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase';
 
-export type UserRole = 'finder' | 'owner' | 'admin';
+export type UserRole = 'admin' | 'user';
+
+// The single privileged admin email (checked server-side as the source of truth)
+export const ADMIN_EMAIL_IDENTIFIER = 'iamheresanjeev@gmail.com';
 
 export interface UserProfile {
   uid: string;
   displayName: string;
   email: string;
-  photoURL: string;
+  phone?: string;
+  photoURL?: string;
   role: UserRole;
   createdAt: any;
 }
@@ -29,10 +33,15 @@ export interface AuthContextType {
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  isAdmin: boolean;
+  adminSessionToken: string | null;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
-  updateRole: (newRole: UserRole) => Promise<void>;
-  loginAsDemo: (role: UserRole) => Promise<void>;
+  updateProfileData: (data: Partial<UserProfile>) => Promise<void>;
+  loginAsDemo: (roleType: 'admin' | 'user') => Promise<void>;
+  requestAdminOtp: () => Promise<{ success: boolean; message: string; simulatedPreviewCode?: string }>;
+  verifyAdminOtp: (code: string) => Promise<{ success: boolean; sessionToken?: string; message?: string }>;
+  clearAdminSession: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,25 +50,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [adminSessionToken, setAdminSessionToken] = useState<string | null>(() => {
+    return sessionStorage.getItem('findback_admin_session_token');
+  });
+
+  // Determines if the current active email matches the privileged admin
+  const currentEmail = (userProfile?.email || user?.email || '').trim().toLowerCase();
+  const isAdmin = currentEmail === ADMIN_EMAIL_IDENTIFIER.toLowerCase();
 
   // Sync user profile from Firestore or initialize upon first sign-in
   const syncUserProfile = async (firebaseUser: FirebaseUser): Promise<UserProfile> => {
+    const userEmail = (firebaseUser.email || '').trim().toLowerCase();
+    const assignedRole: UserRole = userEmail === ADMIN_EMAIL_IDENTIFIER.toLowerCase() ? 'admin' : 'user';
+
     try {
       const userDocRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userDocRef);
 
       if (userSnap.exists()) {
         const data = userSnap.data() as UserProfile;
-        setUserProfile(data);
-        return data;
+        // Strict protection: role is always computed from email match, ignoring DB tampering
+        const validatedProfile: UserProfile = {
+          ...data,
+          role: assignedRole,
+          email: firebaseUser.email || data.email,
+          displayName: firebaseUser.displayName || data.displayName,
+          photoURL: firebaseUser.photoURL || data.photoURL,
+        };
+        setUserProfile(validatedProfile);
+        return validatedProfile;
       } else {
         // First login: create user document in Firestore users collection
         const newProfile: UserProfile = {
           uid: firebaseUser.uid,
           displayName: firebaseUser.displayName || 'FindBack Citizen',
           email: firebaseUser.email || '',
-          photoURL: firebaseUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${firebaseUser.uid}`,
-          role: 'finder', // Default role
+          phone: '+91 98400 12345',
+          photoURL: firebaseUser.photoURL || '',
+          role: assignedRole, // Only iamheresanjeev@gmail.com becomes admin
           createdAt: serverTimestamp(),
         };
 
@@ -69,13 +97,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.warn('Could not sync profile with Firestore:', error);
-      // Fallback in-memory profile
       const fallbackProfile: UserProfile = {
         uid: firebaseUser.uid,
         displayName: firebaseUser.displayName || 'FindBack Citizen',
         email: firebaseUser.email || '',
-        photoURL: firebaseUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${firebaseUser.uid}`,
-        role: 'finder',
+        phone: '+91 98400 12345',
+        photoURL: firebaseUser.photoURL || '',
+        role: assignedRole,
         createdAt: new Date().toISOString(),
       };
       setUserProfile(fallbackProfile);
@@ -94,6 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (storedDemo) {
           try {
             const parsed = JSON.parse(storedDemo);
+            // Re-enforce server role rule
+            const isAdm = (parsed.email || '').trim().toLowerCase() === ADMIN_EMAIL_IDENTIFIER.toLowerCase();
+            parsed.role = isAdm ? 'admin' : 'user';
             setUserProfile(parsed);
           } catch {
             setUserProfile(null);
@@ -117,9 +148,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('findback_demo_profile');
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
-      // If popup is blocked by iframe or browser restrictions, offer friendly guidance
       if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-        throw new Error('Sign-in popup was blocked by the browser. Please allow popups or use the Pitch Demo Mode.');
+        throw new Error('Sign-in popup was blocked by the browser. Please enable popups or select Quick Login.');
       }
       throw error;
     } finally {
@@ -132,6 +162,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await firebaseSignOut(auth);
       localStorage.removeItem('findback_demo_profile');
+      sessionStorage.removeItem('findback_admin_session_token');
+      setAdminSessionToken(null);
       setUser(null);
       setUserProfile(null);
     } catch (error) {
@@ -141,41 +173,97 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateRole = async (newRole: UserRole) => {
-    if (userProfile) {
-      const updated = { ...userProfile, role: newRole };
-      setUserProfile(updated);
-      localStorage.setItem('findback_demo_profile', JSON.stringify(updated));
+  const updateProfileData = async (data: Partial<UserProfile>) => {
+    if (!userProfile) return;
+    const updated = { ...userProfile, ...data };
+    // Prevent any attempt to self-escalate role
+    const isAdm = (updated.email || '').trim().toLowerCase() === ADMIN_EMAIL_IDENTIFIER.toLowerCase();
+    updated.role = isAdm ? 'admin' : 'user';
 
-      if (user) {
-        try {
-          const userDocRef = doc(db, 'users', user.uid);
-          await updateDoc(userDocRef, { role: newRole });
-        } catch (err) {
-          console.warn('Could not update role in Firestore:', err);
-        }
+    setUserProfile(updated);
+    localStorage.setItem('findback_demo_profile', JSON.stringify(updated));
+
+    if (user?.uid) {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, { ...data, role: updated.role });
+      } catch (err) {
+        console.warn('Could not update profile in Firestore:', err);
       }
     }
   };
 
-  // Demo user login for guaranteed zero-friction INNOVARA '26 pitch demo
-  const loginAsDemo = async (role: UserRole) => {
+  // Demo user login for pitch evaluation
+  const loginAsDemo = async (roleType: 'admin' | 'user') => {
     setLoading(true);
-    const demoId = `demo_${role}_chennai`;
-    const demoProfile: UserProfile = {
-      uid: demoId,
-      displayName: role === 'admin' ? 'Chennai Hub Administrator' : role === 'finder' ? 'Karthik Raja (Finder)' : 'Priya Sundaram (Owner)',
-      email: `${role}.chennai@findback.network`,
-      photoURL: role === 'admin' 
-        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-      role: role,
-      createdAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem('findback_demo_profile', JSON.stringify(demoProfile));
-    setUserProfile(demoProfile);
+    if (roleType === 'admin') {
+      // Exactly the privileged email required
+      const adminProfile: UserProfile = {
+        uid: 'adm_chennai_sanjeev',
+        displayName: 'Sanjeev V. (Admin)',
+        email: ADMIN_EMAIL_IDENTIFIER,
+        phone: '+91 94440 98765',
+        photoURL: '',
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem('findback_demo_profile', JSON.stringify(adminProfile));
+      setUserProfile(adminProfile);
+    } else {
+      const userProfileDemo: UserProfile = {
+        uid: 'usr_chennai_karthik',
+        displayName: 'Karthik Subramanian',
+        email: 'karthik.subramanian@gmail.com',
+        phone: '+91 98401 23456',
+        photoURL: '',
+        role: 'user',
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem('findback_demo_profile', JSON.stringify(userProfileDemo));
+      setUserProfile(userProfileDemo);
+    }
     setLoading(false);
+  };
+
+  // Step-up 2FA: Request 6-digit OTP from server
+  const requestAdminOtp = async () => {
+    const res = await fetch('/api/admin/request-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: userProfile?.email || user?.email }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to request verification code');
+    }
+    return data;
+  };
+
+  // Step-up 2FA: Verify 6-digit OTP with server
+  const verifyAdminOtp = async (code: string) => {
+    const res = await fetch('/api/admin/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: userProfile?.email || user?.email, code }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Invalid or expired verification code');
+    }
+
+    if (data.sessionToken) {
+      sessionStorage.setItem('findback_admin_session_token', data.sessionToken);
+      setAdminSessionToken(data.sessionToken);
+    }
+
+    return data;
+  };
+
+  const clearAdminSession = () => {
+    sessionStorage.removeItem('findback_admin_session_token');
+    setAdminSessionToken(null);
   };
 
   return (
@@ -184,10 +272,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         userProfile,
         loading,
+        isAdmin,
+        adminSessionToken,
         signInWithGoogle,
         signOut,
-        updateRole,
+        updateProfileData,
         loginAsDemo,
+        requestAdminOtp,
+        verifyAdminOtp,
+        clearAdminSession,
       }}
     >
       {children}
@@ -202,3 +295,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

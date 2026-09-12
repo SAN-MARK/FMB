@@ -1,6 +1,30 @@
-export type UserRole = 'FINDER' | 'OWNER' | 'HUB_STAFF' | 'ADMIN';
+export type UserRole = 
+  | 'admin' 
+  | 'user' 
+  | 'finder' 
+  | 'owner' 
+  | 'FINDER' 
+  | 'OWNER' 
+  | 'ADMIN' 
+  | 'HUB_STAFF';
 
-export type ItemCategory = 'Phone' | 'Wallet' | 'Documents' | 'Jewellery' | 'Keys' | 'Other';
+export type ItemCategory = 
+  | 'Phone' 
+  | 'Wallet' 
+  | 'ID Card' 
+  | 'Bag' 
+  | 'Documents' 
+  | 'Jewellery' 
+  | 'Keys' 
+  | 'Other';
+
+export type ClaimStatus = 
+  | 'Reported' 
+  | 'Matched' 
+  | 'Verifying' 
+  | 'Returned' 
+  | 'Closed' 
+  | 'Disputed';
 
 export type ItemStatus = 
   | 'reported' 
@@ -8,7 +32,8 @@ export type ItemStatus =
   | 'listed' 
   | 'claimed' 
   | 'verified' 
-  | 'returned';
+  | 'returned'
+  | 'disputed';
 
 export interface User {
   id: string;
@@ -17,8 +42,14 @@ export interface User {
   email: string;
   phone?: string;
   avatar_url?: string;
-  role_default?: UserRole;
-  created_at: string;
+  role?: UserRole | string;
+  role_default?: UserRole | string;
+  created_at?: string;
+}
+
+export interface RegisteredAccount extends User {
+  password_hash?: string;
+  e164_phone: string;
 }
 
 export interface Hub {
@@ -27,10 +58,37 @@ export interface Hub {
   address: string;
   lat: number;
   lng: number;
-  hours: string;
-  photo_url: string;
-  phone?: string;
+  is_active?: boolean;
   is_verified?: boolean;
+  volume_level?: 'high' | 'medium' | 'low';
+  hours?: string;
+  photo_url?: string;
+  phone?: string;
+  landmark?: string;
+  tamil_name?: string;
+  distance_badge?: string;
+  created_at?: string;
+}
+
+export type ChennaiHub = Hub;
+
+export interface LiveCaptureMetadata {
+  timestamp: string;
+  is_live_camera: boolean;
+  geolocation?: {
+    lat: number;
+    lng: number;
+    accuracy?: number;
+  };
+  device_info?: string;
+}
+
+export interface AiMatchResult {
+  match_score: number; // 0 - 100
+  confidence: 'high' | 'medium' | 'low';
+  summary: string;
+  fraud_risk: 'low' | 'medium' | 'high';
+  detected_features: string[];
 }
 
 export interface FoundItem {
@@ -48,12 +106,30 @@ export interface FoundItem {
   hub_id: string;
   hub?: Hub;
   status: ItemStatus;
-  description?: string;
+  description: string;
+  capture_metadata?: LiveCaptureMetadata;
+  ai_verification?: AiMatchResult;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   dropped_at?: string;
   verified_at?: string;
   returned_at?: string;
+}
+
+export interface Claim {
+  id: string;
+  item_id: string;
+  claimant_id: string;
+  claimant_name?: string;
+  claimant_email?: string;
+  status: ClaimStatus;
+  dispute_flag: boolean;
+  created_at: string;
+  resolved_at?: string;
+  proof_notes?: string;
+  proof_url?: string;
+  id_number_masked?: string;
+  match_score?: number;
 }
 
 export interface Verification {
@@ -62,12 +138,64 @@ export interface Verification {
   claimant_id: string;
   claimant_name?: string;
   claimant_email?: string;
-  proof_type: 'ID_CARD' | 'PURCHASE_RECEIPT' | 'IMEI_SERIAL' | 'PHOTO_WITH_ITEM' | 'SECURITY_QUESTION';
+  status: 'pending' | 'approved' | 'rejected' | 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  proof_type?: string;
+  id_type?: string;
   id_number_masked?: string;
-  proof_url?: string;
-  review_notes?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  document_url?: string;
+  notes?: string;
   created_at: string;
+  [key: string]: any;
+}
+
+export type PayoutStatus = 'pending' | 'approved' | 'held' | 'rejected' | 'paid';
+
+export interface Payout {
+  id: string;
+  claim_id: string;
+  finder_id?: string;
+  finder_name: string;
+  finder_email?: string;
+  finder_phone?: string;
+  finder_upi?: string;
+  item_id?: string;
+  item_title?: string;
+  item_description: string;
+  hub_id?: string;
+  hub_name: string;
+  amount?: number; // Finder reward = 30% of recovery fee
+  finder_reward_amount: number;
+  total_recovery_fee: number;
+  status: PayoutStatus;
+  razorpay_txn_id?: string;
+  razorpay_payout_id?: string;
+  approved_by?: string;
+  approved_at?: string;
+  reason?: string | null;
+  hold_reason?: string | null;
+  dispute_flag?: boolean;
+  created_at: string;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  actor_email: string;
+  action: string;
+  target_id?: string;
+  timestamp: string;
+  details?: string;
+  metadata?: any;
+}
+
+export interface CounterpartMessage {
+  id: string;
+  item_id: string;
+  sender_id: string;
+  sender_name: string;
+  sender_email: string;
+  sender_role: 'finder' | 'owner' | 'admin';
+  message: string;
+  timestamp: string;
 }
 
 export interface Coordinates {

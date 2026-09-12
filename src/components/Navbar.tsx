@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth, UserRole } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { getSimulatedNotificationLogs, DispatchedNotificationRecord } from '../lib/notifications';
 
 interface NavbarProps {
@@ -8,7 +8,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
-  const { user, userProfile, signOut, updateRole } = useAuth();
+  const { user, userProfile, signOut, isAdmin } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifModalOpen, setNotifModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<DispatchedNotificationRecord[]>([]);
@@ -35,199 +35,174 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const role = userProfile?.role || 'finder';
-  const isAdmin = role === 'admin';
   const displayName = userProfile?.displayName || user?.displayName || 'Citizen';
   const email = userProfile?.email || user?.email || '';
   const photoURL = userProfile?.photoURL || user?.photoURL || '';
+  const initialChar = displayName.trim().charAt(0).toUpperCase() || 'F';
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[#060612]/90 backdrop-blur-md border-b border-indigo-500/20 px-4 py-2.5">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-[#F1ECE2] border-b border-[#1B1B1B] px-4 sm:px-8 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           
-          {/* Logo with Arc Reactor Glow */}
+          {/* Logo / Wordmark (Bold condensed architectural print branding) */}
           <div 
             onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-2.5 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-600 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.6)] group-hover:shadow-[0_0_20px_rgba(6,182,212,0.9)] transition-all">
-              <div className="w-4 h-4 rounded-full bg-[#060612] border border-cyan-300 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 bg-cyan-300 transform rotate-45" />
-              </div>
+            <div className="w-7 h-7 bg-[#1B1B1B] text-[#F1ECE2] flex items-center justify-center font-['Archivo_Black'] text-sm tracking-tighter">
+              F
             </div>
-            <div>
-              <span className="text-lg font-black tracking-wider text-white flex items-center gap-1 font-sans">
+            <div className="flex items-baseline gap-2">
+              <span className="font-['Archivo_Black'] text-xl sm:text-2xl tracking-tighter text-[#1B1B1B] uppercase">
                 FINDBACK
-                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 border border-cyan-400/40 px-1.5 py-0.2 rounded">
-                  CHN
-                </span>
+              </span>
+              <span className="font-['Space_Mono'] text-[10px] uppercase tracking-widest text-[#4A4A47]">
+                [ CHENNAI ]
               </span>
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-[#0c0f24] border border-indigo-900/50 p-1 rounded-full text-xs font-medium">
+          {/* Desktop Navigation Links — uppercase + letter-spaced, underline on active/hover, no pills */}
+          <nav className="hidden md:flex items-center gap-6 font-['Space_Mono'] text-xs uppercase tracking-wider">
             <button
               onClick={() => onNavigate('dashboard')}
-              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+              className={`py-1 cursor-pointer transition-colors ${
                 currentTab === 'dashboard'
-                  ? 'bg-indigo-600 text-white font-semibold shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                  ? 'text-[#1B1B1B] font-bold underline underline-offset-8 decoration-2 decoration-[#1B1B1B]'
+                  : 'text-[#4A4A47] hover:text-[#1B1B1B] hover:underline hover:underline-offset-8'
               }`}
             >
-              Dashboard
+              PROFILE & FEED
+            </button>
+            <button
+              onClick={() => onNavigate('claims_reports')}
+              className={`py-1 cursor-pointer transition-colors ${
+                currentTab === 'claims_reports'
+                  ? 'text-[#1B1B1B] font-bold underline underline-offset-8 decoration-2 decoration-[#1B1B1B]'
+                  : 'text-[#4A4A47] hover:text-[#1B1B1B] hover:underline hover:underline-offset-8'
+              }`}
+            >
+              MY CLAIMS & REPORTS
             </button>
             <button
               onClick={() => onNavigate('report-item')}
-              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+              className={`py-1 cursor-pointer transition-colors ${
                 currentTab === 'report-item'
-                  ? 'bg-indigo-600 text-white font-semibold shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                  ? 'text-[#1B1B1B] font-bold underline underline-offset-8 decoration-2 decoration-[#1B1B1B]'
+                  : 'text-[#4A4A47] hover:text-[#1B1B1B] hover:underline hover:underline-offset-8'
               }`}
             >
-              Report Item
+              REPORT LOST
             </button>
             <button
               onClick={() => onNavigate('search')}
-              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+              className={`py-1 cursor-pointer transition-colors ${
                 currentTab === 'search'
-                  ? 'bg-indigo-600 text-white font-semibold shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                  ? 'text-[#1B1B1B] font-bold underline underline-offset-8 decoration-2 decoration-[#1B1B1B]'
+                  : 'text-[#4A4A47] hover:text-[#1B1B1B] hover:underline hover:underline-offset-8'
               }`}
             >
-              Search & Claim
+              SEARCH & CLAIM
             </button>
 
-            {/* Admin Panel Link: Only visible if role === "admin" */}
+            {/* Admin Console Link: Only visible to privileged hardcoded admin email */}
             {isAdmin && (
               <button
                 onClick={() => onNavigate('admin')}
-                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`py-1 cursor-pointer transition-colors flex items-center gap-1.5 font-bold ${
                   currentTab === 'admin'
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-[0_0_15px_rgba(168,85,247,0.5)]'
-                    : 'text-purple-300 hover:text-white hover:bg-purple-950/40'
+                    ? 'text-[#B0492E] underline underline-offset-8 decoration-2 decoration-[#B0492E]'
+                    : 'text-[#B0492E] hover:underline hover:underline-offset-8'
                 }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                <span>Admin Panel</span>
+                <span>[ ADMIN CONSOLE ]</span>
               </button>
             )}
           </nav>
 
-          {/* Right Action Icons & User Dropdown */}
+          {/* Right Action: Notifications & User Session */}
           <div className="flex items-center gap-3">
             
             {/* Simulated Email Notifications Trigger */}
             <button
               type="button"
               onClick={() => setNotifModalOpen(true)}
-              className="relative p-2 rounded-xl bg-slate-900 border border-slate-700/60 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/50 transition-all cursor-pointer"
-              title="Simulated Owner Email Alerts"
+              className="p-1.5 border border-[#1B1B1B] text-[#1B1B1B] hover:bg-[#1B1B1B] hover:text-[#F1ECE2] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-['Space_Mono'] uppercase"
+              title="Dispatched Custody Notifications Log"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
+              <span className="hidden sm:inline">NOTIFS</span>
               {notifications.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-cyan-500 text-[#060612] text-[10px] font-bold flex items-center justify-center font-mono">
-                  {notifications.length}
-                </span>
+                <span className="font-bold text-[#B0492E]">({notifications.length})</span>
               )}
             </button>
 
-            {/* Authenticated User / Sign In Button */}
+            {/* User Session Dropdown */}
             {user || userProfile ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 p-1 pl-2 pr-2.5 rounded-full bg-[#0d102b] border border-indigo-500/40 hover:border-cyan-400/60 transition-all cursor-pointer shadow-[0_0_10px_rgba(99,102,241,0.2)]"
+                  className="flex items-center gap-2 p-1 border border-[#1B1B1B] hover:bg-[#E8E1D3] transition-colors cursor-pointer"
                 >
                   {photoURL ? (
                     <img
                       src={photoURL}
                       alt={displayName}
-                      className="w-7 h-7 rounded-full object-cover border border-cyan-400"
+                      className="w-6 h-6 object-cover border border-[#1B1B1B]"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 text-white font-bold text-xs flex items-center justify-center">
-                      {displayName.charAt(0).toUpperCase()}
+                    <div className="w-6 h-6 bg-[#1B1B1B] text-[#F1ECE2] font-['Space_Mono'] font-bold text-xs flex items-center justify-center">
+                      {initialChar}
                     </div>
                   )}
-                  <span className="text-xs font-medium text-slate-200 hidden sm:inline max-w-[100px] truncate">
+                  <span className="text-xs font-['Space_Mono'] font-bold text-[#1B1B1B] hidden sm:inline max-w-[120px] truncate uppercase">
                     {displayName}
                   </span>
-                  <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded ${
-                    role === 'admin' 
-                      ? 'bg-purple-900/60 text-purple-300 border border-purple-500/50' 
-                      : role === 'owner'
-                      ? 'bg-amber-900/60 text-amber-300 border border-amber-500/50'
-                      : 'bg-cyan-900/60 text-cyan-300 border border-cyan-500/50'
-                  }`}>
-                    {role}
+                  <span className="text-[10px] font-['Space_Mono'] uppercase text-[#4A4A47] hidden sm:inline">
+                    {isAdmin ? '( ADMIN )' : '( CITIZEN )'}
                   </span>
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu — Sharp architectural panel with thin border */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#090b20] border border-indigo-500/30 shadow-[0_10px_30px_rgba(0,0,0,0.8)] py-2 text-slate-200 z-50 animate-in fade-in zoom-in-95">
-                    <div className="px-4 py-2.5 border-b border-indigo-900/40">
-                      <p className="text-xs font-bold text-white truncate">{displayName}</p>
-                      <p className="text-[11px] text-slate-400 truncate">{email}</p>
-                      <div className="mt-1 flex items-center justify-between">
-                        <span className="text-[10px] font-mono text-cyan-400 uppercase">
-                          Role: {role}
+                  <div className="absolute right-0 mt-1 w-64 bg-[#E8E1D3] border border-[#1B1B1B] py-2 text-[#1B1B1B] z-50">
+                    <div className="px-4 py-2 border-b border-[#1B1B1B]">
+                      <p className="text-xs font-['Archivo_Black'] uppercase truncate">{displayName}</p>
+                      <p className="text-[11px] text-[#4A4A47] truncate font-['Space_Mono']">{email}</p>
+                      <div className="mt-1">
+                        <span className="text-[10px] font-['Space_Mono'] uppercase font-bold text-[#1B1B1B]">
+                          ROLE : {isAdmin ? 'SUPER ADMIN' : 'CITIZEN'}
                         </span>
-                        {/* Instant Role Switcher for Pitch Evaluator Demo */}
-                        <div className="flex gap-1 text-[9px] font-mono">
-                          <button
-                            type="button"
-                            onClick={() => updateRole('finder')}
-                            className={`px-1.5 py-0.5 rounded ${role === 'finder' ? 'bg-cyan-500 text-black font-bold' : 'bg-slate-800 text-slate-400'}`}
-                          >
-                            Find
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateRole('owner')}
-                            className={`px-1.5 py-0.5 rounded ${role === 'owner' ? 'bg-amber-500 text-black font-bold' : 'bg-slate-800 text-slate-400'}`}
-                          >
-                            Own
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateRole('admin')}
-                            className={`px-1.5 py-0.5 rounded ${role === 'admin' ? 'bg-purple-500 text-black font-bold' : 'bg-slate-800 text-slate-400'}`}
-                          >
-                            Admin
-                          </button>
-                        </div>
                       </div>
                     </div>
 
-                    <div className="py-1 text-xs">
+                    <div className="py-1 text-xs font-['Space_Mono'] uppercase">
                       <button
                         type="button"
                         onClick={() => {
                           setDropdownOpen(false);
                           onNavigate('dashboard');
                         }}
-                        className="w-full px-4 py-2 text-left hover:bg-indigo-950/60 hover:text-cyan-300 flex items-center gap-2 cursor-pointer"
+                        className="w-full px-4 py-2 text-left hover:bg-[#F1ECE2] text-[#1B1B1B] flex items-center gap-2 cursor-pointer"
                       >
-                        <span>📊</span>
-                        <span>Profile & Dashboard</span>
+                        <span>→</span>
+                        <span>PROFILE & FEED</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => {
                           setDropdownOpen(false);
-                          onNavigate('dashboard');
+                          onNavigate('claims_reports');
                         }}
-                        className="w-full px-4 py-2 text-left hover:bg-indigo-950/60 hover:text-cyan-300 flex items-center gap-2 cursor-pointer"
+                        className="w-full px-4 py-2 text-left hover:bg-[#F1ECE2] text-[#1B1B1B] flex items-center gap-2 cursor-pointer"
                       >
-                        <span>📦</span>
-                        <span>My Claims & Reports</span>
+                        <span>→</span>
+                        <span>MY CLAIMS & REPORTS</span>
                       </button>
 
                       {isAdmin && (
@@ -237,15 +212,15 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
                             setDropdownOpen(false);
                             onNavigate('admin');
                           }}
-                          className="w-full px-4 py-2 text-left hover:bg-purple-950/60 text-purple-300 flex items-center gap-2 cursor-pointer font-semibold"
+                          className="w-full px-4 py-2 text-left hover:bg-[#F1ECE2] text-[#B0492E] flex items-center gap-2 cursor-pointer font-bold"
                         >
-                          <span>⚡</span>
-                          <span>Admin Console (Payouts)</span>
+                          <span>→</span>
+                          <span>ADMIN CONSOLE</span>
                         </button>
                       )}
                     </div>
 
-                    <div className="pt-1 border-t border-indigo-900/40">
+                    <div className="pt-1 border-t border-[#1B1B1B]">
                       <button
                         type="button"
                         onClick={() => {
@@ -253,12 +228,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
                           signOut();
                           onNavigate('login');
                         }}
-                        className="w-full px-4 py-2 text-left text-xs text-red-400 hover:bg-red-950/40 flex items-center gap-2 cursor-pointer"
+                        className="w-full px-4 py-2 text-left text-xs font-['Space_Mono'] text-[#B0492E] hover:bg-[#F1ECE2] flex items-center gap-2 cursor-pointer uppercase font-bold"
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span>Sign Out</span>
+                        <span>✕</span>
+                        <span>SIGN OUT</span>
                       </button>
                     </div>
                   </div>
@@ -268,103 +241,106 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               <button
                 type="button"
                 onClick={() => onNavigate('login')}
-                className="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-full text-xs font-bold shadow-[0_0_12px_rgba(99,102,241,0.5)] transition-all cursor-pointer"
+                className="btn-primary"
               >
-                Sign In
+                SIGN IN
               </button>
             )}
           </div>
         </div>
 
-        {/* Mobile Sub-Navigation Bar */}
-        <div className="md:hidden flex items-center justify-around pt-2 mt-2 border-t border-indigo-950/80 text-[11px] font-mono">
+        {/* Mobile Navigation Strip — Thin horizontal divider */}
+        <div className="md:hidden flex items-center justify-between pt-2.5 mt-2.5 border-t border-[#1B1B1B] text-[11px] font-['Space_Mono'] uppercase tracking-wider overflow-x-auto">
           <button
             onClick={() => onNavigate('dashboard')}
-            className={`py-1 px-2 rounded ${currentTab === 'dashboard' ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}
+            className={`py-1 px-1.5 whitespace-nowrap ${currentTab === 'dashboard' ? 'font-bold underline underline-offset-4 text-[#1B1B1B]' : 'text-[#4A4A47]'}`}
           >
-            Dashboard
+            FEED
+          </button>
+          <button
+            onClick={() => onNavigate('claims_reports')}
+            className={`py-1 px-1.5 whitespace-nowrap ${currentTab === 'claims_reports' ? 'font-bold underline underline-offset-4 text-[#1B1B1B]' : 'text-[#4A4A47]'}`}
+          >
+            CLAIMS
           </button>
           <button
             onClick={() => onNavigate('report-item')}
-            className={`py-1 px-2 rounded ${currentTab === 'report-item' ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}
+            className={`py-1 px-1.5 whitespace-nowrap ${currentTab === 'report-item' ? 'font-bold underline underline-offset-4 text-[#1B1B1B]' : 'text-[#4A4A47]'}`}
           >
-            Report
+            REPORT
           </button>
           <button
             onClick={() => onNavigate('search')}
-            className={`py-1 px-2 rounded ${currentTab === 'search' ? 'text-cyan-400 font-bold' : 'text-slate-400'}`}
+            className={`py-1 px-1.5 whitespace-nowrap ${currentTab === 'search' ? 'font-bold underline underline-offset-4 text-[#1B1B1B]' : 'text-[#4A4A47]'}`}
           >
-            Search
+            SEARCH
           </button>
           {isAdmin && (
             <button
               onClick={() => onNavigate('admin')}
-              className={`py-1 px-2 rounded ${currentTab === 'admin' ? 'text-purple-400 font-bold' : 'text-purple-400/70'}`}
+              className={`py-1 px-1.5 whitespace-nowrap font-bold ${currentTab === 'admin' ? 'text-[#B0492E] underline underline-offset-4' : 'text-[#B0492E]'}`}
             >
-              Admin
+              ADMIN
             </button>
           )}
         </div>
       </header>
 
-      {/* Simulated Email Notification Viewer Modal */}
+      {/* Simulated Email Notification Viewer Modal (Monochrome Vintage Spec) */}
       {notifModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#090b20] border border-cyan-500/40 rounded-3xl max-w-xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.3)]">
-            <div className="p-4 border-b border-indigo-900/50 flex items-center justify-between bg-[#0c0f24]">
+        <div className="fixed inset-0 z-50 bg-[#1B1B1B]/60 flex items-center justify-center p-4">
+          <div className="bg-[#F1ECE2] border border-[#1B1B1B] max-w-xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-[#1B1B1B] flex items-center justify-between bg-[#E8E1D3]">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-                <h3 className="text-sm font-bold text-white font-mono uppercase tracking-wider">
-                  Owner Email Dispatch Simulation
-                </h3>
+                <span className="font-['Space_Mono'] font-bold text-xs uppercase tracking-wider text-[#1B1B1B]">
+                  [ DISPATCHED NOTIFICATION ARCHIVE ]
+                </span>
               </div>
               <button
                 type="button"
                 onClick={() => setNotifModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="font-['Space_Mono'] text-xs font-bold px-2 py-1 border border-[#1B1B1B] hover:bg-[#1B1B1B] hover:text-[#F1ECE2] cursor-pointer"
               >
-                ✕
+                ✕ CLOSE
               </button>
             </div>
 
             <div className="p-4 overflow-y-auto space-y-4 flex-1">
-              <p className="text-xs text-slate-400 leading-relaxed">
-                When a lost item is reported at a custody hub, FindBack automatically generates and dispatches an encrypted email notification to the registered owner with custody location and claim codes.
+              <p className="text-xs font-body text-[#4A4A47] leading-relaxed">
+                Whenever items are registered or custody handoffs occur at Chennai partner hubs, FindBack records and dispatches cryptographic notifications to the verified owner.
               </p>
 
               {notifications.length === 0 ? (
-                <div className="p-8 text-center border border-dashed border-indigo-900/60 rounded-2xl">
-                  <p className="text-xs text-slate-400">No emails dispatched yet.</p>
-                  <p className="text-[11px] text-cyan-400 mt-1">
-                    Try reporting an item in the Finder Flow to trigger an owner email notification!
+                <div className="p-8 text-center border border-[#1B1B1B] bg-[#E8E1D3]">
+                  <p className="font-['Space_Mono'] text-xs text-[#1B1B1B] uppercase">NO NOTIFICATIONS LOGGED YET</p>
+                  <p className="text-xs font-body text-[#4A4A47] mt-1">
+                    Report a found item or process a claim to generate custody dispatches.
                   </p>
                 </div>
               ) : (
                 notifications.map((notif) => (
                   <div
                     key={notif.id}
-                    className="bg-[#111538] border border-indigo-500/30 rounded-2xl p-3.5 space-y-2"
+                    className="border border-[#1B1B1B] bg-[#E8E1D3] p-3 space-y-2"
                   >
-                    <div className="flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-cyan-400 font-semibold">To: {notif.recipientEmail}</span>
-                      <span className="text-slate-500">{new Date(notif.timestamp).toLocaleTimeString()}</span>
+                    <div className="flex items-center justify-between text-[11px] font-['Space_Mono']">
+                      <span className="font-bold text-[#1B1B1B]">TO : {notif.recipientEmail}</span>
+                      <span className="text-[#4A4A47]">{new Date(notif.timestamp).toLocaleTimeString()}</span>
                     </div>
-                    <div className="text-xs font-bold text-white">{notif.subject}</div>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
-                      <span className="bg-indigo-950 border border-indigo-700/50 px-2 py-0.5 rounded text-indigo-300">
-                        {notif.itemCategory}
-                      </span>
-                      <span>Hub: {notif.hubName}</span>
-                      <span className="text-cyan-300">Code: {notif.claimCode}</span>
+                    <div className="text-sm font-['Archivo_Black'] uppercase text-[#1B1B1B]">{notif.subject}</div>
+                    <div className="flex flex-wrap items-center gap-3 text-[10px] text-[#1B1B1B] font-['Space_Mono'] uppercase">
+                      <span>CATEGORY : [{notif.itemCategory}]</span>
+                      <span>HUB : {notif.hubName}</span>
+                      <span className="font-bold">CODE : {notif.claimCode}</span>
                     </div>
 
-                    <div className="pt-2 border-t border-indigo-950/80">
+                    <div className="pt-2 border-t border-[#1B1B1B]">
                       <details className="text-xs">
-                        <summary className="text-[11px] text-cyan-400 cursor-pointer font-mono hover:underline">
-                          View Rendered Email Preview
+                        <summary className="text-[11px] text-[#B0492E] cursor-pointer font-['Space_Mono'] hover:underline uppercase font-bold">
+                          [ VIEW DISPATCH PREVIEW ]
                         </summary>
                         <div 
-                          className="mt-2 p-3 bg-[#060612] rounded-xl border border-slate-800 text-[11px] max-h-60 overflow-y-auto"
+                          className="mt-2 p-3 bg-[#F1ECE2] border border-[#1B1B1B] text-[11px] font-body max-h-60 overflow-y-auto"
                           dangerouslySetInnerHTML={{ __html: notif.previewHtml }}
                         />
                       </details>
@@ -374,13 +350,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               )}
             </div>
 
-            <div className="p-3 border-t border-indigo-900/50 bg-[#0c0f24] flex justify-end">
+            <div className="p-3 border-t border-[#1B1B1B] bg-[#E8E1D3] flex justify-end">
               <button
                 type="button"
                 onClick={() => setNotifModalOpen(false)}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold"
+                className="btn-primary"
               >
-                Close Log
+                DISMISS LOG
               </button>
             </div>
           </div>

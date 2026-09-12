@@ -20,6 +20,8 @@ export const CATEGORIES: ItemCategory[] = [
 export const CATEGORY_TAMIL_LABELS: Record<ItemCategory, string> = {
   Phone: 'Phone',
   Wallet: 'Wallet பை',
+  'ID Card': 'ID Card அடையாள அட்டை',
+  Bag: 'Bag பை',
   Keys: 'Keys சாவி',
   Documents: 'Documents ஆவணம்',
   Jewellery: 'நகை Jewellery',

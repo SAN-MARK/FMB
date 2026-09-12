@@ -33,7 +33,7 @@ export const ReportItem: React.FC<ReportItemProps> = ({ onSuccess, onNavigate })
   const [selectedHub, setSelectedHub] = useState(CHENNAI_HUBS[0].id);
   const [photoURL, setPhotoURL] = useState('https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=80');
   
-  // Optional owner contact for simulated email alerting if finder knows or found contact card
+  // Optional owner contact for simulated email alerting
   const [ownerEmailPrompt, setOwnerEmailPrompt] = useState('priya.lostproperty@gmail.com');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,7 +89,6 @@ export const ReportItem: React.FC<ReportItemProps> = ({ onSuccess, onNavigate })
       if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error('Failed to submit found item to Firestore:', err);
-      // Even if Firestore rule restricts unauthenticated test tokens, provide resilient feedback
       setErrorMessage(err?.message || 'Error recording item in database.');
     } finally {
       setIsSubmitting(false);
@@ -97,268 +96,254 @@ export const ReportItem: React.FC<ReportItemProps> = ({ onSuccess, onNavigate })
   };
 
   return (
-    <div className="min-h-screen bg-[#060612] text-slate-100 p-4 sm:p-6 pb-24 relative">
+    <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-10">
       
-      {/* Glow Effects */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+      {/* Header */}
+      <div className="border-b border-[#1B1B1B] pb-6">
+        <span className="font-['Space_Mono'] text-xs uppercase tracking-widest text-[#B0492E] font-bold block mb-2">
+          [ CITIZEN DEPOSIT PROTOCOL · SECTION D ]
+        </span>
+        <h1 className="text-4xl sm:text-6xl font-['Archivo_Black'] uppercase tracking-tight text-[#1B1B1B] leading-none">
+          REPORT FOUND ITEM
+        </h1>
+        <p className="font-body text-xs sm:text-sm text-[#4A4A47] mt-3 italic max-w-xl">
+          Register the discovered property and deposit it at any verified Chennai custody hub to earn your 30% statutory reward upon recovery.
+        </p>
+      </div>
 
-      <div className="max-w-2xl mx-auto relative z-10">
-        
-        {/* Success / Confirmation State */}
-        {submittedItem ? (
-          <div className="bg-[#090b20] border border-cyan-400/50 rounded-3xl p-6 sm:p-8 shadow-[0_0_40px_rgba(6,182,212,0.3)] animate-in fade-in zoom-in-95 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-cyan-400/20 border-2 border-cyan-400 flex items-center justify-center text-cyan-300 text-2xl shadow-[0_0_20px_#22d3ee] mb-4">
-              ✓
+      {submittedItem ? (
+        /* Confirmation State: Editorial Certificate Layout */
+        <div className="border border-[#1B1B1B] bg-[#E8E1D3] p-8 space-y-6">
+          <div className="border-b border-[#1B1B1B] pb-4 flex items-center justify-between">
+            <div>
+              <span className="font-['Space_Mono'] text-[10px] uppercase text-[#4B5D3A] font-bold block">
+                [ RECORD REGISTERED IN FIRESTORE ]
+              </span>
+              <h2 className="text-2xl font-['Archivo_Black'] uppercase text-[#1B1B1B] mt-1">
+                CUSTODY PASS ISSUED
+              </h2>
             </div>
-
-            <h2 className="text-2xl font-black text-white">Item Registered to Hub!</h2>
-            <p className="text-xs text-cyan-400 font-mono mt-1">
-              RECORDED IN FIRESTORE COLLECTION: `found_items/{submittedItem.id}`
-            </p>
-
-            {/* Custody Tag Card */}
-            <div className="my-6 p-5 bg-[#0d1133] border border-indigo-500/40 rounded-2xl text-left font-mono">
-              <div className="flex justify-between items-center border-b border-indigo-900 pb-2 mb-3">
-                <span className="text-xs text-slate-400">FINDBACK CUSTODY PASS</span>
-                <span className="text-xs text-cyan-400 font-bold">{submittedItem.claimCode}</span>
-              </div>
-              <p className="text-xs text-slate-300">
-                Category: <strong className="text-white">{submittedItem.category}</strong>
-              </p>
-              <p className="text-xs text-slate-300 mt-1">
-                Drop Location: <strong className="text-white">{submittedItem.hub.name}</strong>
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Address: {submittedItem.hub.address}
-              </p>
-            </div>
-
-            {/* Email Notification Simulation Banner */}
-            {emailAlertInfo && (
-              <div className="p-4 bg-emerald-950/50 border border-emerald-500/40 rounded-2xl text-left mb-6">
-                <div className="flex items-center gap-2 text-emerald-300 font-bold text-xs font-mono">
-                  <span>✉️ Owner Notification Dispatched:</span>
-                  <span className="text-[10px] bg-emerald-900 px-2 py-0.5 rounded text-white">
-                    {emailAlertInfo.messageId}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 mt-1">
-                  {emailAlertInfo.subject}
-                </p>
-                <p className="text-[10px] text-emerald-400/80 mt-1">
-                  Recipient received secure claim code & hub custody directions without exposing your identity.
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setSubmittedItem(null);
-                  setEmailAlertInfo(null);
-                }}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all"
-              >
-                + Report Another Item
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('dashboard')}
-                className="px-5 py-2.5 bg-[#0d102b] hover:bg-[#141842] border border-cyan-500/40 text-cyan-300 rounded-xl text-xs font-bold transition-all"
-              >
-                View in Dashboard
-              </button>
+            <div className="text-right font-['Space_Mono'] text-xs text-[#1B1B1B]">
+              PASS NO : <span className="font-bold underline">{submittedItem.claimCode}</span>
             </div>
           </div>
-        ) : (
-          /* Report Form */
-          <div className="bg-[#090b20]/95 border border-indigo-500/30 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-[0_0_35px_rgba(99,102,241,0.2)]">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-indigo-950 pb-4 mb-6">
+
+          <div className="border border-[#1B1B1B] bg-[#F1ECE2] p-6 space-y-3 font-['Space_Mono'] text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 bg-cyan-950/80 border border-cyan-500/30 px-2 py-0.5 rounded">
-                  FINDER INTAKE PROTOCOL
-                </span>
-                <h1 className="text-2xl font-black text-white mt-1">Report Found Item</h1>
-                <p className="text-xs text-slate-400">
-                  Register the item and drop it at any Chennai verified hub to earn ₹60 reward.
-                </p>
+                <span className="text-[#4A4A47] block text-[10px] uppercase">ITEM CATEGORY</span>
+                <span className="font-bold text-[#1B1B1B]">{submittedItem.category}</span>
               </div>
-              <div className="w-10 h-10 rounded-full bg-indigo-950 border border-indigo-700/50 flex items-center justify-center text-lg">
-                📦
+              <div>
+                <span className="text-[#4A4A47] block text-[10px] uppercase">DEPOSIT HUB</span>
+                <span className="font-bold text-[#1B1B1B]">{submittedItem.hub.name}</span>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-[#1B1B1B]">
+              <span className="text-[#4A4A47] block text-[10px] uppercase">HUB ADDRESS</span>
+              <span className="text-[#1B1B1B]">{submittedItem.hub.address}</span>
+            </div>
+          </div>
+
+          {emailAlertInfo && (
+            <div className="border border-[#4B5D3A] bg-[#F1ECE2] p-4 font-['Space_Mono'] text-xs space-y-1">
+              <div className="font-bold text-[#4B5D3A] uppercase">
+                ✉️ OWNER NOTIFICATION DISPATCHED : {emailAlertInfo.messageId}
+              </div>
+              <p className="font-body text-[#1B1B1B] text-xs">
+                {emailAlertInfo.subject}
+              </p>
+              <div className="text-[10px] text-[#4A4A47]">
+                Recipient provided with custody hub directions and cryptographic claim code.
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-4 pt-2 font-['Space_Mono']">
+            <button
+              type="button"
+              onClick={() => {
+                setSubmittedItem(null);
+                setEmailAlertInfo(null);
+              }}
+              className="btn-secondary text-xs"
+            >
+              [ + REPORT ANOTHER ITEM ]
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('dashboard')}
+              className="btn-primary py-2.5 px-6 text-xs"
+            >
+              RETURN TO DASHBOARD
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Report Form: Sharp Architectural Inputs */
+        <div className="border border-[#1B1B1B] bg-[#E8E1D3] p-6 sm:p-8">
+          {errorMessage && (
+            <div className="mb-6 p-3 bg-[#F1ECE2] border border-[#B0492E] text-[#B0492E] text-xs font-['Space_Mono'] uppercase">
+              {errorMessage}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6 font-['Space_Mono'] text-xs">
+            
+            {/* Category Selector */}
+            <div>
+              <label className="block font-bold uppercase text-[#1B1B1B] mb-2">
+                1. SELECT CATEGORY
+              </label>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={`py-2 px-1 text-center border border-[#1B1B1B] cursor-pointer transition-colors ${
+                      category === cat
+                        ? 'bg-[#1B1B1B] text-[#F1ECE2] font-bold'
+                        : 'bg-[#F1ECE2] text-[#1B1B1B] hover:bg-[#E8E1D3]'
+                    }`}
+                  >
+                    {cat.toUpperCase()}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {errorMessage && (
-              <div className="mb-4 p-3 bg-red-950/70 border border-red-500/50 rounded-xl text-red-200 text-xs">
-                {errorMessage}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              
-              {/* Category Selector */}
-              <div>
-                <label className="block text-xs font-mono uppercase text-slate-300 mb-2">
-                  Item Category
-                </label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setCategory(cat)}
-                      className={`py-2 px-1 text-center rounded-xl text-xs font-medium transition-all cursor-pointer ${
-                        category === cat
-                          ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white font-bold shadow-[0_0_12px_rgba(99,102,241,0.4)] border border-cyan-400'
-                          : 'bg-[#0d102b] text-slate-400 hover:text-white border border-indigo-900/60'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Photo Reference (Preset Sample / Custom URL) */}
-              <div>
-                <label className="block text-xs font-mono uppercase text-slate-300 mb-2">
-                  Photo Evidence (Protected / Blurred in Public Directory)
-                </label>
-                <div className="flex gap-3 items-center">
+            {/* Photo Reference */}
+            <div>
+              <label className="block font-bold uppercase text-[#1B1B1B] mb-2">
+                2. EVIDENCE PHOTOGRAPH
+              </label>
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="w-20 h-20 bg-[#1B1B1B] border border-[#1B1B1B] shrink-0 overflow-hidden">
                   <img
                     src={photoURL}
                     alt="Preview"
-                    className="w-16 h-16 rounded-xl object-cover border border-cyan-400/60 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                    className="w-full h-full object-cover grayscale contrast-125"
                   />
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={photoURL}
-                      onChange={(e) => setPhotoURL(e.target.value)}
-                      placeholder="Photo Image URL"
-                      className="w-full bg-[#0d102b] border border-indigo-900/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
-                    />
-                    <div className="flex gap-2 mt-1.5 text-[10px] text-slate-400">
-                      <button
-                        type="button"
-                        onClick={() => setPhotoURL('https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=80')}
-                        className="text-cyan-400 hover:underline"
-                      >
-                        Phone Preset
-                      </button>
-                      <span>•</span>
-                      <button
-                        type="button"
-                        onClick={() => setPhotoURL('https://images.unsplash.com/photo-1627123424574-724758594e93?w=500&auto=format&fit=crop&q=80')}
-                        className="text-cyan-400 hover:underline"
-                      >
-                        Wallet Preset
-                      </button>
-                      <span>•</span>
-                      <button
-                        type="button"
-                        onClick={() => setPhotoURL('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500&auto=format&fit=crop&q=80')}
-                        className="text-cyan-400 hover:underline"
-                      >
-                        Docs Preset
-                      </button>
-                    </div>
+                </div>
+                <div className="flex-1 space-y-2 w-full">
+                  <input
+                    type="text"
+                    value={photoURL}
+                    onChange={(e) => setPhotoURL(e.target.value)}
+                    placeholder="Photo Image URL"
+                    className="w-full bg-[#F1ECE2] border border-[#1B1B1B] px-3 py-2 text-xs text-[#1B1B1B] focus:outline-none"
+                  />
+                  <div className="flex gap-4 text-[10px] text-[#4A4A47] uppercase">
+                    <button
+                      type="button"
+                      onClick={() => setPhotoURL('https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=80')}
+                      className="underline cursor-pointer hover:text-[#1B1B1B]"
+                    >
+                      PHONE PRESET
+                    </button>
+                    <span>·</span>
+                    <button
+                      type="button"
+                      onClick={() => setPhotoURL('https://images.unsplash.com/photo-1627123424574-724758594e93?w=500&auto=format&fit=crop&q=80')}
+                      className="underline cursor-pointer hover:text-[#1B1B1B]"
+                    >
+                      WALLET PRESET
+                    </button>
+                    <span>·</span>
+                    <button
+                      type="button"
+                      onClick={() => setPhotoURL('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500&auto=format&fit=crop&q=80')}
+                      className="underline cursor-pointer hover:text-[#1B1B1B]"
+                    >
+                      DOCS PRESET
+                    </button>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Discovery Location */}
-              <div>
-                <label className="block text-xs font-mono uppercase text-slate-300 mb-1.5">
-                  Discovery Location (Chennai Landmark)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Velachery MRTS Concourse, Near Ticket Counter"
-                  className="w-full bg-[#0d102b] border border-indigo-900/80 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400"
-                />
-              </div>
+            {/* Discovery Location */}
+            <div>
+              <label className="block font-bold uppercase text-[#1B1B1B] mb-1">
+                3. DISCOVERY LOCATION (CHENNAI METRO)
+              </label>
+              <input
+                type="text"
+                required
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. Velachery MRTS Concourse, Near Platform 2"
+                className="w-full bg-[#F1ECE2] border border-[#1B1B1B] px-3.5 py-2.5 text-xs text-[#1B1B1B] focus:outline-none"
+              />
+            </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-mono uppercase text-slate-300 mb-1.5">
-                  Item Description & Distinct Identifiers
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Midnight blue iPhone 13 in black bumper case with Tamil Nadu transport smart card attached in sleeve."
-                  className="w-full bg-[#0d102b] border border-indigo-900/80 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-400 leading-relaxed"
-                />
-              </div>
+            {/* Description */}
+            <div>
+              <label className="block font-bold uppercase text-[#1B1B1B] mb-1">
+                4. DESCRIPTION & DISTINGUISHING FEATURES
+              </label>
+              <textarea
+                rows={2}
+                required
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Midnight blue iPhone 13 in matte bumper case with CMRL travel card attached."
+                className="w-full bg-[#F1ECE2] border border-[#1B1B1B] px-3.5 py-2 text-xs text-[#1B1B1B] focus:outline-none"
+              />
+            </div>
 
-              {/* Custody Hub Selection */}
-              <div>
-                <label className="block text-xs font-mono uppercase text-slate-300 mb-1.5">
-                  Designated Custody Drop Hub
-                </label>
-                <select
-                  value={selectedHub}
-                  onChange={(e) => setSelectedHub(e.target.value)}
-                  className="w-full bg-[#0d102b] border border-indigo-900/80 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400"
-                >
-                  {CHENNAI_HUBS.map((hub) => (
-                    <option key={hub.id} value={hub.id}>
-                      {hub.name} — {hub.address}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Simulated Owner Email Notification Dispatch Trigger */}
-              <div className="p-3.5 bg-indigo-950/40 border border-indigo-700/40 rounded-2xl">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-mono text-cyan-300 font-semibold flex items-center gap-1.5">
-                    <span>⚡ Automatic Owner Alert Simulation</span>
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">UTILITY HOOK</span>
-                </div>
-                <input
-                  type="email"
-                  value={ownerEmailPrompt}
-                  onChange={(e) => setOwnerEmailPrompt(e.target.value)}
-                  placeholder="Owner's email (if visible on tag or in contact card)"
-                  className="w-full bg-[#090b20] border border-indigo-800/80 rounded-xl px-3 py-1.5 text-xs text-cyan-200 font-mono focus:outline-none focus:border-cyan-400 mt-1"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">
-                  FindBack will automatically simulate dispatching an encrypted email notification to this owner alerting them of the custody hub location.
-                </p>
-              </div>
-
-              {/* Submit CTA */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all cursor-pointer active:scale-[0.99] border border-cyan-400/30 flex items-center justify-center gap-2"
+            {/* Custody Hub Selection */}
+            <div>
+              <label className="block font-bold uppercase text-[#1B1B1B] mb-1">
+                5. DESIGNATED CUSTODY HUB
+              </label>
+              <select
+                value={selectedHub}
+                onChange={(e) => setSelectedHub(e.target.value)}
+                className="w-full bg-[#F1ECE2] border border-[#1B1B1B] px-3.5 py-2.5 text-xs text-[#1B1B1B] focus:outline-none cursor-pointer"
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Transmitting to Firestore & Notifying Owner...</span>
-                  </>
-                ) : (
-                  <span>SUBMIT ITEM & GENERATE CUSTODY PASS</span>
-                )}
-              </button>
+                {CHENNAI_HUBS.map((hub) => (
+                  <option key={hub.id} value={hub.id}>
+                    {hub.name} — {hub.address}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            </form>
-          </div>
-        )}
+            {/* Automated Owner Alert Hook */}
+            <div className="border border-[#1B1B1B] bg-[#F1ECE2] p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold uppercase text-[#1B1B1B]">
+                  6. AUTOMATIC OWNER ALERT NOTIFICATION (SIMULATION)
+                </span>
+                <span className="text-[10px] text-[#B0492E] font-bold">[ HOOK ]</span>
+              </div>
+              <input
+                type="email"
+                value={ownerEmailPrompt}
+                onChange={(e) => setOwnerEmailPrompt(e.target.value)}
+                placeholder="Owner email if found on tag"
+                className="w-full bg-[#E8E1D3] border border-[#1B1B1B] px-3 py-1.5 text-xs text-[#1B1B1B] focus:outline-none"
+              />
+              <p className="font-body text-[11px] text-[#4A4A47] italic">
+                FindBack will automatically simulate dispatching an encrypted email notification to this owner alerting them of the custody hub drop.
+              </p>
+            </div>
 
-      </div>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full btn-primary py-3.5 text-xs"
+            >
+              {isSubmitting ? 'RECORDING IN FIRESTORE...' : 'REGISTER PROPERTY IN LEDGER & GENERATE CUSTODY PASS'}
+            </button>
+
+          </form>
+        </div>
+      )}
+
     </div>
   );
 };

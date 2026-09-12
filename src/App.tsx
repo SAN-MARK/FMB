@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { Login } from './components/Login';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Dashboard } from './components/Dashboard';
+import { MyClaimsAndReports } from './components/MyClaimsAndReports';
 import { ReportItem } from './components/ReportItem';
 import { SearchItems } from './components/SearchItems';
 import { AdminPanel } from './components/AdminPanel';
@@ -39,13 +40,20 @@ const AppContent: React.FC = () => {
           </ProtectedRoute>
         );
 
+      case 'claims_reports':
+        return (
+          <ProtectedRoute>
+            <MyClaimsAndReports onNavigate={handleNavigate} />
+          </ProtectedRoute>
+        );
+
       case 'report-item':
         return (
           <ProtectedRoute>
             <ReportItem
               onNavigate={handleNavigate}
               onSuccess={() => {
-                // optionally navigate or celebrate
+                handleNavigate('claims_reports');
               }}
             />
           </ProtectedRoute>
@@ -75,26 +83,28 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#060612] text-slate-100 flex flex-col antialiased selection:bg-indigo-600 selection:text-white">
+    <div className="min-h-screen bg-[#F1ECE2] text-[#1B1B1B] flex flex-col antialiased selection:bg-[#1B1B1B] selection:text-[#F1ECE2]">
       {/* Top Navbar: Only shown when logged in or when viewing an app view */}
       {isAuthenticated && (
         <Navbar currentTab={currentTab} onNavigate={handleNavigate} />
       )}
 
       {/* Main View Area */}
-      <main className="flex-1">
+      <main className="flex-1 bg-[#F1ECE2]">
         {renderView()}
       </main>
 
-      {/* Persistent Bottom Status Bar for INNOVARA '26 Pitch */}
+      {/* Persistent Bottom Status Bar for INNOVARA '26 Pitch (Editorial Monochrome) */}
       {isAuthenticated && (
-        <footer className="py-2.5 px-4 bg-[#090b20]/90 border-t border-indigo-950 text-center text-[11px] font-mono text-slate-500 flex items-center justify-between">
+        <footer className="py-2.5 px-4 bg-[#E8E1D3] border-t border-[#1B1B1B] text-center text-[11px] font-mono text-[#1B1B1B] flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-slate-400">Firebase Firestore: Connected (Live Real-time)</span>
+            <span className="w-2 h-2 bg-[#4B5D3A]" />
+            <span className="text-[#1B1B1B] tracking-wider uppercase">
+              FIRESTORE CUSTODY LEDGER : ACTIVE (CHENNAI GRID)
+            </span>
           </div>
-          <div className="text-cyan-400 font-bold">
-            INNOVARA '26 · PITCH READY (SEP 19)
+          <div className="text-[#1B1B1B] font-bold tracking-widest uppercase">
+            [ INNOVARA '26 · PITCH DEPLOYMENT · SEP 19 ]
           </div>
         </footer>
       )}
